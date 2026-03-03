@@ -1,4 +1,18 @@
 import { useEffect, useState } from "react";
+import { Bar, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from "chart.js";
+
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
@@ -7,14 +21,44 @@ export default function Dashboard() {
     setProducts(JSON.parse(localStorage.getItem("products")) || []);
   }, []);
 
-  // Calculate summary metrics
   const totalProducts = products.length;
   const totalStock = products.reduce((a, p) => a + p.stock, 0);
   const totalSold = products.reduce((a, p) => a + (p.sold || 0), 0);
   const totalRevenue = products.reduce((a, p) => a + ((p.sold || 0) * p.price), 0);
 
-  // Low stock products
-  const lowStock = products.filter(p => p.stock <= 5);
+  const stockColor = (stock) => {
+    if (stock === 0) return "#dc3545"; // Red
+    if (stock <= 15) return "#800000"; // Maroon
+    if (stock <= 30) return "#ffc107"; // Dark Yellow
+    return "#28a745"; // Green
+  };
+
+  // Data for Stock Remaining Pie Chart
+  const pieData = {
+    labels: products.map(p => p.name),
+    datasets: [
+      {
+        label: "Stock Remaining",
+        data: products.map(p => p.stock),
+        backgroundColor: products.map(p => stockColor(p.stock))
+      }
+    ]
+  };
+
+  // Data for Most Sold Products Bar Chart
+  const barData = {
+    labels: products.map(p => p.name),
+    datasets: [
+      {
+        label: "Units Sold",
+        data: products.map(p => p.sold || 0),
+        backgroundColor: "#007bff"
+      }
+    ]
+  };
+
+  const formatKES = (n) =>
+    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(n);
 
   return (
     <div className="container-fluid py-4" style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
@@ -43,7 +87,7 @@ export default function Dashboard() {
         <div className="col-md-3">
           <div className="card shadow-sm border-0 text-center p-4 bg-white rounded">
             <h6 className="text-secondary mb-2">Total Revenue</h6>
-            <h2 className="fw-bold">KSh {totalRevenue.toLocaleString()}</h2>
+            <h2 className="fw-bold">{formatKES(totalRevenue)}</h2>
           </div>
         </div>
       </div>
@@ -53,53 +97,14 @@ export default function Dashboard() {
         <div className="col-md-6">
           <div className="card shadow-sm border-0 p-4 bg-white rounded">
             <h5 className="mb-3 text-primary fw-semibold">Most Sold Products</h5>
-            <div className="d-flex justify-content-center align-items-center" style={{ height: "250px", color: "#6c757d" }}>
-              Chart goes here
-            </div>
+            <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
           </div>
         </div>
         <div className="col-md-6">
           <div className="card shadow-sm border-0 p-4 bg-white rounded">
             <h5 className="mb-3 text-primary fw-semibold">Stock Remaining</h5>
-            <div className="d-flex justify-content-center align-items-center" style={{ height: "250px", color: "#6c757d" }}>
-              Chart goes here
-            </div>
+            <Pie data={pieData} options={{ responsive: true, plugins: { legend: { position: "bottom" } } }} />
           </div>
-        </div>
-      </div>
-
-      {/* Low Stock Table */}
-      <div className="card shadow-sm border-0 p-4 bg-white rounded">
-        <h5 className="mb-3 text-primary fw-semibold">Low Stock Products</h5>
-        <div className="table-responsive">
-          <table className="table table-hover align-middle">
-            <thead className="table-light">
-              <tr>
-                <th>Product</th>
-                <th>Stock Left</th>
-                <th>Sold Qty</th>
-                <th>Price per Unit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lowStock.length > 0 ? (
-                lowStock.map((p, i) => (
-                  <tr key={i}>
-                    <td>{p.name}</td>
-                    <td>{p.stock}</td>
-                    <td>{p.sold || 0}</td>
-                    <td>KSh {p.price.toLocaleString()}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="text-center text-secondary">
-                    All products have sufficient stock.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
