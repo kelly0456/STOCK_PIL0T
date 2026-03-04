@@ -1,112 +1,107 @@
 import { useEffect, useState } from "react";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  ArcElement,
-  Title,
   Tooltip,
   Legend
 } from "chart.js";
 
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
+  const [sales, setSales] = useState([]);
 
   useEffect(() => {
-    setProducts(JSON.parse(localStorage.getItem("products")) || []);
+    const savedProducts = JSON.parse(localStorage.getItem("products")) || [];
+    setProducts(savedProducts);
+
+    const savedSales = JSON.parse(localStorage.getItem("salesHistory")) || [];
+    setSales(savedSales);
   }, []);
 
-  const totalProducts = products.length;
-  const totalStock = products.reduce((a, p) => a + p.stock, 0);
-  const totalSold = products.reduce((a, p) => a + (p.sold || 0), 0);
-  const totalRevenue = products.reduce((a, p) => a + ((p.sold || 0) * p.price), 0);
-
-  const stockColor = (stock) => {
-    if (stock === 0) return "#dc3545"; // Red
-    if (stock <= 15) return "#800000"; // Maroon
-    if (stock <= 30) return "#ffc107"; // Dark Yellow
-    return "#28a745"; // Green
+  const getStockColor = (stock) => {
+    if (stock === 0) return "#dc3545";        // Red
+    if (stock >= 1 && stock <= 15) return "#6f42c1";  // Purple
+    if (stock >= 16 && stock <= 30) return "#ffc107"; // Yellow
+    return "#28a745";                         // Green
   };
 
-  // Data for Stock Remaining Pie Chart
-  const pieData = {
+  const chartData = {
     labels: products.map(p => p.name),
     datasets: [
       {
         label: "Stock Remaining",
         data: products.map(p => p.stock),
-        backgroundColor: products.map(p => stockColor(p.stock))
+        backgroundColor: products.map(p => getStockColor(p.stock)),
+        borderRadius: 6
       }
     ]
   };
 
-  // Data for Most Sold Products Bar Chart
-  const barData = {
-    labels: products.map(p => p.name),
-    datasets: [
-      {
-        label: "Units Sold",
-        data: products.map(p => p.sold || 0),
-        backgroundColor: "#007bff"
-      }
-    ]
-  };
+  const lowStock = products.filter(p => p.stock <= 15);
 
-  const formatKES = (n) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(n);
+  const totalProducts = products.length;
+  const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
+  const totalSold = products.reduce((sum, p) => sum + (p.sold || 0), 0);
+
+  // 🔹 Calculate total daily revenue from sales
+  const today = new Date().toISOString().split("T")[0];
+  const dailySales = sales.filter(s => s.date.split("T")[0] === today);
+  const dailyRevenue = dailySales.reduce((sum, s) => sum + s.total, 0);
 
   return (
-    <div className="container-fluid py-4" style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
-      <h3 className="mb-4 text-primary fw-bold">📊 Dashboard</h3>
+    <>
+      <h3 className="mb-4">Dashboard</h3>
 
-      {/* Summary Cards */}
-      <div className="row g-4 mb-5">
-        <div className="col-md-3">
-          <div className="card shadow-sm border-0 text-center p-4 bg-white rounded">
-            <h6 className="text-secondary mb-2">Total Products</h6>
-            <h2 className="fw-bold">{totalProducts}</h2>
+      <div className="row mb-4">
+        <div className="col-md-4">
+          <div className="card p-3 shadow text-center">
+            <h5>Total Products</h5>
+            <h3>{totalProducts}</h3>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card shadow-sm border-0 text-center p-4 bg-white rounded">
-            <h6 className="text-secondary mb-2">Total Stock</h6>
-            <h2 className="fw-bold">{totalStock}</h2>
+        <div className="col-md-4">
+          <div className="card p-3 shadow text-center">
+            <h5>Total Stock</h5>
+            <h3>{totalStock}</h3>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card shadow-sm border-0 text-center p-4 bg-white rounded">
-            <h6 className="text-secondary mb-2">Total Sold</h6>
-            <h2 className="fw-bold">{totalSold}</h2>
-          </div>
-        </div>
-        <div className="col-md-3">
-          <div className="card shadow-sm border-0 text-center p-4 bg-white rounded">
-            <h6 className="text-secondary mb-2">Total Revenue</h6>
-            <h2 className="fw-bold">{formatKES(totalRevenue)}</h2>
+        <div className="col-md-4">
+          <div className="card p-3 shadow text-center">
+            <h5>Total Sold</h5>
+            <h3>{totalSold}</h3>
           </div>
         </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="row g-4 mb-5">
-        <div className="col-md-6">
-          <div className="card shadow-sm border-0 p-4 bg-white rounded">
-            <h5 className="mb-3 text-primary fw-semibold">Most Sold Products</h5>
-            <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-          </div>
-        </div>
-        <div className="col-md-6">
-          <div className="card shadow-sm border-0 p-4 bg-white rounded">
-            <h5 className="mb-3 text-primary fw-semibold">Stock Remaining</h5>
-            <Pie data={pieData} options={{ responsive: true, plugins: { legend: { position: "bottom" } } }} />
-          </div>
-        </div>
+      {/* Stock Chart */}
+      <div className="card p-4 shadow mb-4">
+        <Bar data={chartData} />
       </div>
-    </div>
+
+      {/* Low Stock Alert */}
+      {lowStock.length > 0 && (
+        <div className="card p-3 shadow border-danger">
+          <h5 className="text-danger">⚠ Low Stock Alert</h5>
+          <ul>
+            {lowStock.map(p => (
+              <li key={p.id || p.name}>
+                {p.name} — {p.stock} remaining
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* 🔹 Daily Revenue */}
+      <div className="card p-3 shadow mt-4">
+        <h5 className="text-success">💰 Today's Revenue</h5>
+        <h3>KSh {dailyRevenue.toLocaleString()}</h3>
+      </div>
+    </>
   );
 }

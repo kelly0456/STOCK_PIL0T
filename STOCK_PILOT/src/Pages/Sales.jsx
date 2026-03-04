@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 export default function Sales() {
   const [products, setProducts] = useState([]);
   const [query, setQuery] = useState("");
-  const [qty, setQty] = useState(1);
   const [selected, setSelected] = useState(null);
+  const [qty, setQty] = useState(1);
+  const [cart, setCart] = useState([]);
   const [amountPaid, setAmountPaid] = useState("");
 
   useEffect(() => {
@@ -23,107 +24,150 @@ export default function Sales() {
     setQty(1);
   };
 
-  const total = selected ? selected.price * qty : 0;
-  const change = amountPaid ? Number(amountPaid) - total : 0;
+  const addToCart = () => {
+    if (!selected || qty < 1 || qty > selected.stock) return;
 
-  const recordSale = () => {
-    if (!selected || qty < 1 || qty > selected.stock || !amountPaid) return;
+    const item = {
+      id: Date.now(),
+      name: selected.name,
+      price: selected.price,
+      qty,
+      total: selected.price * qty,
+    };
 
-    // Update product stock & sold
-    const updatedProducts = products.map((p) =>
-      p.name === selected.name
-        ? { ...p, stock: p.stock - qty, sold: (p.sold || 0) + qty }
-        : p
-    );
-    setProducts(updatedProducts);
+    setCart([...cart, item]);
+    setQuery("");
+    setSelected(null);
+    setQty(1);
+  };
+
+  // 🔹 Fast cashier: pressing Enter adds product directly to cart
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      if (selected) {
+        addToCart();
+      } else if (suggestions.length > 0) {
+        selectProduct(suggestions[0]);
+        setTimeout(() => addToCart(), 50); // small delay for state update
+      }
+    }
+  };
+
+  const grandTotal = cart.reduce((sum, item) => sum + item.total, 0);
+  const change = amountPaid ? Number(amountPaid) - grandTotal : 0;
+
+  const confirmSale = () => {
+    if (cart.length === 0 || change < 0) return;
+
+    // Update product stock
+    const updatedProducts = products.map((p) => {
+      const soldItem = cart.find((c) => c.name === p.name);
+      if (soldItem) {
+        return {
+          ...p,
+          stock: p.stock - soldItem.qty,
+          sold: (p.sold || 0) + soldItem.qty,
+        };
+      }
+      return p;
+    });
+
     localStorage.setItem("products", JSON.stringify(updatedProducts));
 
-    // Record sale in salesHistory (per day)
-    const salesHistory = JSON.parse(localStorage.getItem("salesHistory")) || [];
+    // Save sale history
+    const salesHistory =
+      JSON.parse(localStorage.getItem("salesHistory")) || [];
     const newSale = {
-      name: selected.name,
-      qty,
-      price: selected.price,
-      total: total,
+      id: Date.now(),
+      items: cart,
+      total: grandTotal,
       date: new Date().toISOString(),
     };
-    localStorage.setItem("salesHistory", JSON.stringify([...salesHistory, newSale]));
+    localStorage.setItem(
+      "salesHistory",
+      JSON.stringify([...salesHistory, newSale])
+    );
 
-    // Reset form
-    setSelected(null);
-    setQuery("");
-    setQty(1);
+    setProducts(updatedProducts);
+    setCart([]);
     setAmountPaid("");
   };
 
   return (
-    <div className="container py-4" style={{ minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
-      <h3 className="mb-4 text-primary fw-bold">💰 Sales</h3>
+    <div className="container py-4">
+      <h3 className="mb-3 text-primary">Sales POS</h3>
 
-      <div className="card shadow p-4 col-md-6 mx-auto rounded">
-        {/* Product Search */}
-        <label className="form-label fw-semibold">Product</label>
+      <div className="card p-4 mb-4">
         <input
           className="form-control mb-2"
-          placeholder="Type product name..."
+          placeholder="Search product..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
 
-        {/* Suggestions */}
         {query && suggestions.length > 0 && (
           <ul className="list-group mb-3">
-            {suggestions.map((p, i) => (
+            {suggestions.map((p) => (
               <li
-                key={i}
+                key={p.name}
                 onClick={() => selectProduct(p)}
-                className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                className="list-group-item list-group-item-action"
                 style={{ cursor: "pointer" }}
               >
-                <span>{p.name}</span>
-                <span className="badge bg-info">{p.stock} left</span>
+                {p.name} (KSh {p.price})
               </li>
             ))}
           </ul>
         )}
 
-        {/* Quantity */}
-        <label className="form-label fw-semibold">Quantity</label>
-        <input
-          type="number"
-          className="form-control mb-3"
-          min="1"
-          max={selected ? selected.stock : 1}
-          value={qty}
-          onChange={(e) => setQty(Number(e.target.value))}
-          disabled={!selected}
-        />
-
-        {/* Total & Payment */}
-        <h5 className="mb-2">Total: KSh {total.toLocaleString()}</h5>
-        <label className="form-label fw-semibold">Amount Paid</label>
-        <input
-          type="number"
-          className="form-control mb-2"
-          value={amountPaid}
-          onChange={(e) => setAmountPaid(e.target.value)}
-          disabled={!selected}
-        />
-
-        {amountPaid && (
-          <h5 className="mb-3">
-            Change: KSh {change >= 0 ? change.toLocaleString() : "0"}
-          </h5>
+        {selected && (
+          <>
+            <input
+              type="number"
+              className="form-control mb-2"
+              min="1"
+              max={selected.stock}
+              value={qty}
+              onChange={(e) => setQty(Number(e.target.value))}
+              onKeyDown={handleKeyDown}
+            />
+          </>
         )}
-
-        <button
-          className="btn btn-primary w-100"
-          onClick={recordSale}
-          disabled={!selected || qty < 1 || qty > selected.stock || !amountPaid}
-        >
-          Confirm Sale
-        </button>
       </div>
+
+      {cart.length > 0 && (
+        <div className="card p-4">
+          <h5>Cart</h5>
+          {cart.map((item) => (
+            <div key={item.id} className="d-flex justify-content-between">
+              <span>{item.name} x{item.qty}</span>
+              <span>KSh {item.total}</span>
+            </div>
+          ))}
+
+          <hr />
+          <h5>Total: KSh {grandTotal}</h5>
+
+          <input
+            type="number"
+            className="form-control mb-2"
+            placeholder="Amount Paid"
+            value={amountPaid}
+            onChange={(e) => setAmountPaid(e.target.value)}
+          />
+
+          <h6>Change: KSh {change >= 0 ? change : 0}</h6>
+
+          <button
+            className="btn btn-success w-100"
+            onClick={confirmSale}
+            disabled={change < 0}
+          >
+            Confirm Sale
+          </button>
+        </div>
+      )}
     </div>
   );
 }
