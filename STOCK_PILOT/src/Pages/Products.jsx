@@ -40,16 +40,16 @@ export default function Products() {
     saveProducts(updated);
   };
 
-  const getStockColor = (stock) => {
-    if (stock === 0) return "danger";      // Red
-    if (stock >= 1 && stock <= 15) return "purple";
-    if (stock >= 16 && stock <= 30) return "warning"; // Yellow
-    return "success";                     // Green
-  };
+ const getStockColor = (stock) => {
+  if (stock === 0) return "danger";
+  if (stock >= 1 && stock <= 15) return "pink";
+  if (stock >= 16 && stock <= 30) return "warning";
+  return "success";
+};
 
   const getBadgeStyle = (stock) => {
     if (stock >= 1 && stock <= 15)
-      return { backgroundColor: "#6f42c1", color: "white" }; // Purple custom
+      return { backgroundColor: "#d45dec", color: "white" }; // Purple custom
     return {};
   };
 

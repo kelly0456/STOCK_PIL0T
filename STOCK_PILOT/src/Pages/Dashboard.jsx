@@ -25,7 +25,7 @@ export default function Dashboard() {
 
   const getStockColor = (stock) => {
     if (stock === 0) return "#dc3545";        // Red
-    if (stock >= 1 && stock <= 15) return "#6f42c1";  // Purple
+    if (stock >= 1 && stock <= 15) return "#c142c1";  // Purple
     if (stock >= 16 && stock <= 30) return "#ffc107"; // Yellow
     return "#28a745";                         // Green
   };
