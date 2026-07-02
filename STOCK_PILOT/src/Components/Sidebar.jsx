@@ -1,28 +1,88 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const role = localStorage.getItem("role");
 
   const linkClass = (path) =>
     `nav-link fw-semibold mb-2 rounded ${
-      location.pathname === path ? "bg-warning text-dark shadow-sm" : "text-white"
+      location.pathname === path
+        ? "bg-warning text-dark shadow-sm"
+        : "text-white"
     }`;
+
+  const logout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
 
   return (
     <>
+      {/* Desktop Sidebar */}
       <div
         className="d-none d-md-flex flex-column flex-shrink-0 p-3 vh-100"
         style={{ backgroundColor: "#1f3b4d", minWidth: "220px" }}
       >
-        <h4 className="text-warning text-center mb-4">📦 StockPilot</h4>
+        <h4 className="text-warning text-center mb-4">
+          📦 StockPilot
+        </h4>
+
         <ul className="nav nav-pills flex-column mb-auto">
-          <li><Link to="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link></li>
-          <li><Link to="/products" className={linkClass("/products")}>Products</Link></li>
-          <li><Link to="/sales" className={linkClass("/sales")}>Sales</Link></li>
-          <li><Link to="/history" className={linkClass("/history")}>History</Link></li>
+
+          {/* Admin Only */}
+          {role === "admin" && (
+            <>
+              <li>
+                <Link
+                  to="/dashboard"
+                  className={linkClass("/dashboard")}
+                >
+                  Dashboard
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  to="/products"
+                  className={linkClass("/products")}
+                >
+                  Products
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  to="/history"
+                  className={linkClass("/history")}
+                >
+                  History
+                </Link>
+              </li>
+            </>
+          )}
+
+          {/* Everyone */}
+          <li>
+            <Link
+              to="/sales"
+              className={linkClass("/sales")}
+            >
+              Sales
+            </Link>
+          </li>
         </ul>
+
+        <button
+          className="btn btn-danger mt-auto"
+          onClick={logout}
+        >
+          Logout
+        </button>
       </div>
 
+      {/* Mobile Sidebar */}
       <div className="d-md-none">
         <button
           className="btn btn-outline-warning mb-3"
@@ -40,16 +100,71 @@ export default function Sidebar() {
           style={{ backgroundColor: "#1f3b4d" }}
         >
           <div className="offcanvas-header">
-            <h5 className="offcanvas-title text-warning">📦 StockPilot</h5>
-            <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+            <h5 className="offcanvas-title text-warning">
+              📦 StockPilot
+            </h5>
+
+            <button
+              type="button"
+              className="btn-close btn-close-white"
+              data-bs-dismiss="offcanvas"
+            ></button>
           </div>
+
           <div className="offcanvas-body p-3">
             <ul className="nav nav-pills flex-column mb-auto">
-              <li><Link data-bs-dismiss="offcanvas" to="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link></li>
-              <li><Link data-bs-dismiss="offcanvas" to="/products" className={linkClass("/products")}>Products</Link></li>
-              <li><Link data-bs-dismiss="offcanvas" to="/sales" className={linkClass("/sales")}>Sales</Link></li>
-              <li><Link data-bs-dismiss="offcanvas" to="/history" className={linkClass("/history")}>History</Link></li>
+
+              {role === "admin" && (
+                <>
+                  <li>
+                    <Link
+                      data-bs-dismiss="offcanvas"
+                      to="/dashboard"
+                      className={linkClass("/dashboard")}
+                    >
+                      Dashboard
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      data-bs-dismiss="offcanvas"
+                      to="/products"
+                      className={linkClass("/products")}
+                    >
+                      Products
+                    </Link>
+                  </li>
+
+                  <li>
+                    <Link
+                      data-bs-dismiss="offcanvas"
+                      to="/history"
+                      className={linkClass("/history")}
+                    >
+                      History
+                    </Link>
+                  </li>
+                </>
+              )}
+
+              <li>
+                <Link
+                  data-bs-dismiss="offcanvas"
+                  to="/sales"
+                  className={linkClass("/sales")}
+                >
+                  Sales
+                </Link>
+              </li>
             </ul>
+
+            <button
+              className="btn btn-danger w-100 mt-3"
+              onClick={logout}
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>

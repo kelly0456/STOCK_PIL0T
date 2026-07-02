@@ -41,7 +41,7 @@ export default function Sales() {
     setQty(1);
   };
 
-  // 🔹 Fast cashier: pressing Enter adds product directly to cart
+  //
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       if (selected) {
@@ -100,7 +100,7 @@ export default function Sales() {
       <div className="card p-4 mb-4">
         <input
           className="form-control mb-2"
-          placeholder="Search product..."
+          placeholder="Enter product..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
