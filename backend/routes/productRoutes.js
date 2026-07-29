@@ -4,8 +4,8 @@ const {
   getProducts,
   addProduct,
   deleteProduct,
-  updateProduct
-} = require("../controllers/productController");
+  updateProduct,
+} = require("../controller/productController");
 
 router.get("/", getProducts);
 
