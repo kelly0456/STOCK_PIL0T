@@ -5,17 +5,33 @@ const userSchema = new mongoose.Schema(
     businessName: {
       type: String,
       required: true,
+      trim: true,
     },
 
     fullname: {
       type: String,
       required: true,
+      trim: true,
     },
 
     email: {
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    phone: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    position: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     password: {
@@ -32,6 +48,17 @@ const userSchema = new mongoose.Schema(
     active: {
       type: Boolean,
       default: true,
+    },
+
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   {

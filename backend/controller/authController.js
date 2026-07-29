@@ -2,6 +2,9 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// ===============================
+// Register Business Owner (Admin)
+// ===============================
 exports.register = async (req, res) => {
   try {
     const {
@@ -11,9 +14,19 @@ exports.register = async (req, res) => {
       password,
     } = req.body;
 
-    const userExists = await User.findOne({ email });
+    // Only allow one public registration
+    const adminExists = await User.findOne({ role: "admin" });
 
-    if (userExists) {
+    if (adminExists) {
+      return res.status(403).json({
+        message:
+          "Business account already exists. Please login.",
+      });
+    }
+
+    const emailExists = await User.findOne({ email });
+
+    if (emailExists) {
       return res.status(400).json({
         message: "Email already exists.",
       });
@@ -21,32 +34,39 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Make the first registered user the admin
-    const userCount = await User.countDocuments();
-
-    const user = await User.create({
+    const admin = await User.create({
       businessName,
       fullname,
       email,
       password: hashedPassword,
-      role: userCount === 0 ? "admin" : "staff",
+      role: "admin",
+      createdBy: null,
+      mustChangePassword: false,
     });
 
     res.status(201).json({
-      message: "Account created successfully.",
-      role: user.role,
+      message: "Business account created successfully.",
+      role: admin.role,
     });
+
   } catch (error) {
+
     console.log(error);
 
     res.status(500).json({
       message: "Server Error",
     });
+
   }
 };
 
+// ===============================
+// Login
+// ===============================
 exports.login = async (req, res) => {
+
   try {
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
@@ -59,7 +79,7 @@ exports.login = async (req, res) => {
 
     if (!user.active) {
       return res.status(403).json({
-        message: "Account has been disabled.",
+        message: "This account has been deactivated.",
       });
     }
 
@@ -74,6 +94,10 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
     const token = jwt.sign(
       {
         id: user._id,
@@ -86,21 +110,29 @@ exports.login = async (req, res) => {
     );
 
     res.json({
-      message: "Login successful",
+      message: "Login successful.",
+
       token,
+
       user: {
         id: user._id,
         businessName: user.businessName,
         fullname: user.fullname,
         email: user.email,
         role: user.role,
+        active: user.active,
+        mustChangePassword:
+          user.mustChangePassword,
       },
     });
+
   } catch (error) {
+
     console.log(error);
 
     res.status(500).json({
       message: "Server Error",
     });
+
   }
 };
