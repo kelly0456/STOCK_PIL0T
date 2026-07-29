@@ -13,8 +13,10 @@ import Dashboard from "./Pages/Dashboard";
 import Products from "./Pages/Products";
 import Sales from "./Pages/Sales";
 import History from "./Pages/History";
+import Employees from "./Pages/Employees";
 
 function AppLayout() {
+
   const location = useLocation();
 
   const publicPages = [
@@ -33,12 +35,15 @@ function AppLayout() {
   return (
     <div className="d-flex flex-column vh-100">
 
+      {/* Top Navbar */}
       <Navbar />
 
       <div className="d-flex flex-grow-1">
 
+        {/* Sidebar */}
         {showSidebar && <Sidebar />}
 
+        {/* Main Content */}
         <div
           className="flex-grow-1 p-4"
           style={{
@@ -46,9 +51,11 @@ function AppLayout() {
             overflowY: "auto",
           }}
         >
+
           <Routes>
 
-            {/* Public Pages */}
+            {/* ================= PUBLIC ================= */}
+
             <Route path="/" element={<Home />} />
 
             <Route
@@ -61,13 +68,15 @@ function AppLayout() {
               element={<Register />}
             />
 
-            {/* Feature Preview Pages */}
+            {/* Feature Preview */}
+
             <Route
               path="/feature/:feature"
               element={<FeatureDetails />}
             />
 
-            {/* Admin Pages */}
+            {/* ================= ADMIN ================= */}
+
             <Route
               path="/dashboard"
               element={
@@ -95,28 +104,47 @@ function AppLayout() {
               }
             />
 
-            {/* Sales */}
+            <Route
+              path="/employees"
+              element={
+                <AdminRoute>
+                  <Employees />
+                </AdminRoute>
+              }
+            />
+
+            {/* ================= SHARED ================= */}
+
             <Route
               path="/sales"
               element={<Sales />}
             />
 
-            {/* 404 */}
+            {/* ================= 404 ================= */}
+
             <Route
               path="*"
               element={
                 <div className="text-center mt-5">
+
                   <h2 className="text-danger">
                     404 - Page Not Found
                   </h2>
+
+                  <p className="text-muted">
+                    The page you're looking for doesn't exist.
+                  </p>
+
                 </div>
               }
             />
 
           </Routes>
+
         </div>
 
       </div>
+
     </div>
   );
 }
