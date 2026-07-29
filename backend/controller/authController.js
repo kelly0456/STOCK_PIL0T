@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -19,8 +19,7 @@ exports.register = async (req, res) => {
 
     if (adminExists) {
       return res.status(403).json({
-        message:
-          "Business account already exists. Please login.",
+        message: "Business account already exists. Please login.",
       });
     }
 
@@ -50,13 +49,11 @@ exports.register = async (req, res) => {
     });
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server Error",
     });
-
   }
 };
 
@@ -64,7 +61,6 @@ exports.register = async (req, res) => {
 // Login
 // ===============================
 exports.login = async (req, res) => {
-
   try {
 
     const { email, password } = req.body;
@@ -83,10 +79,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    const match = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
       return res.status(400).json({
@@ -94,7 +87,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Update last login
     user.lastLogin = new Date();
     await user.save();
 
@@ -111,9 +103,7 @@ exports.login = async (req, res) => {
 
     res.json({
       message: "Login successful.",
-
       token,
-
       user: {
         id: user._id,
         businessName: user.businessName,
@@ -121,18 +111,15 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         active: user.active,
-        mustChangePassword:
-          user.mustChangePassword,
+        mustChangePassword: user.mustChangePassword,
       },
     });
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server Error",
     });
-
   }
 };
