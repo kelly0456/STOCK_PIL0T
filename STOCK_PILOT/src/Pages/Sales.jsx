@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
+
 export default function Sales() {
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // =====================================================
   // STEP 1
@@ -76,14 +78,14 @@ const fetchProducts = async () => {
 
     const token = localStorage.getItem("token");
 
-    const response = await axios.get(
-      "http://localhost:5000/api/products",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+const response = await axios.get(
+  `${API_URL}/products`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
     setProducts(response.data);
   } catch (error) {
@@ -220,8 +222,8 @@ const completeSale = async () => {
 
     for (const item of cart) {
 
-      await axios.put(
-        `http://localhost:5000/api/products/${item._id}`,
+await axios.put(
+  `${API_URL}/products/${item._id}`,
         {
           stock: item.stock - item.qty,
           sold: item.sold + item.qty

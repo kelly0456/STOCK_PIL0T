@@ -1,70 +1,160 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function History() {
-  const [history, setHistory] = useState([]);
 
-  useEffect(() => {
-    setHistory(JSON.parse(localStorage.getItem("salesHistory")) || []);
-  }, []);
+    const API_URL = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem("token");
 
-  const formatKES = (n) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(n);
+    const [monthly, setMonthly] = useState([]);
+    const [yearly, setYearly] = useState([]);
 
-  const monthly = {};
-  const yearly = {};
+    useEffect(() => {
+        loadReports();
+    }, []);
 
-  history.forEach((s) => {
-    const d = new Date(s.date);
-    const mKey = `${d.getFullYear()}-${d.getMonth() + 1}`;
-    monthly[mKey] = (monthly[mKey] || 0) + s.total;
+    const loadReports = async () => {
 
-    const yKey = d.getFullYear();
-    yearly[yKey] = (yearly[yKey] || 0) + s.total;
-  });
+        try {
 
-  return (
-    <div className="container py-4" style={{ minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
-      <h3 className="mb-4 text-primary fw-bold">📊 Sales History</h3>
+            const headers = {
+                Authorization: `Bearer ${token}`,
+            };
 
-      <div className="card shadow p-4 mb-4 bg-white">
-        <h5 className="mb-3 fw-semibold">Monthly Sales</h5>
-        <table className="table table-hover">
-          <thead className="table-light">
-            <tr>
-              <th>Month</th>
-              <th>Total Sales</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(monthly).map((m, i) => (
-              <tr key={i}>
-                <td>{m}</td>
-                <td>{formatKES(monthly[m])}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            const month = await axios.get(
+                `${API_URL}/reports/monthly`,
+                { headers }
+            );
 
-      <div className="card shadow p-4 bg-white">
-        <h5 className="mb-3 fw-semibold">Yearly Profit</h5>
-        <table className="table table-hover">
-          <thead className="table-light">
-            <tr>
-              <th>Year</th>
-              <th>Total Profit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(yearly).map((y, i) => (
-              <tr key={i}>
-                <td>{y}</td>
-                <td>{formatKES(yearly[y])}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+            const year = await axios.get(
+                `${API_URL}/reports/yearly`,
+                { headers }
+            );
+
+            setMonthly(month.data);
+            setYearly(year.data);
+
+        } catch (err) {
+            console.log(err);
+        }
+
+    };
+
+    const formatKES = (amount) =>
+        new Intl.NumberFormat("en-KE", {
+            style: "currency",
+            currency: "KES",
+        }).format(amount);
+
+    return (
+
+        <div className="container-fluid py-4">
+
+            <h2 className="fw-bold mb-4">
+                Financial Reports
+            </h2>
+
+            <div className="card shadow mb-4">
+
+                <div className="card-header bg-primary text-white">
+                    <h5 className="mb-0">
+                        Monthly Income
+                    </h5>
+                </div>
+
+                <div className="card-body">
+
+                    <table className="table table-striped">
+
+                        <thead>
+
+                            <tr>
+                                <th>Year</th>
+                                <th>Month</th>
+                                <th>Sales</th>
+                                <th>Income</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {monthly.map((m) => (
+
+                                <tr key={`${m._id.year}-${m._id.month}`}>
+
+                                    <td>{m._id.year}</td>
+
+                                    <td>{m._id.month}</td>
+
+                                    <td>{m.totalSales}</td>
+
+                                    <td>
+                                        {formatKES(m.totalIncome)}
+                                    </td>
+
+                                </tr>
+
+                            ))}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div className="card shadow">
+
+                <div className="card-header bg-success text-white">
+                    <h5 className="mb-0">
+                        Yearly Income
+                    </h5>
+                </div>
+
+                <div className="card-body">
+
+                    <table className="table table-striped">
+
+                        <thead>
+
+                            <tr>
+                                <th>Year</th>
+                                <th>Sales</th>
+                                <th>Income</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {yearly.map((y) => (
+
+                                <tr key={y._id.year}>
+
+                                    <td>{y._id.year}</td>
+
+                                    <td>{y.totalSales}</td>
+
+                                    <td>
+                                        {formatKES(y.totalIncome)}
+                                    </td>
+
+                                </tr>
+
+                            ))}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    );
+
 }

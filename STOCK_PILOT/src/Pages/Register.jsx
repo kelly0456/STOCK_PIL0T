@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export default function Register() {
-
   const navigate = useNavigate();
+
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -14,105 +15,79 @@ export default function Register() {
     confirmPassword: "",
   });
 
-  const [loading, setLoading] =
-    useState(false);
-
-  const [message, setMessage] =
-    useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
-
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-
   };
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     setMessage("");
 
-    if (
-      formData.password !==
-      formData.confirmPassword
-    ) {
-
-      return setMessage(
-        "Passwords do not match."
-      );
-
+    if (formData.password !== formData.confirmPassword) {
+      return setMessage("Passwords do not match.");
     }
 
     try {
-
       setLoading(true);
 
-  await axios.post(
-  "http://localhost:5000/api/auth/register",
+      const res = await axios.post(
+        `${API_URL}/auth/register`,
         {
-          businessName:
-            formData.businessName,
-          fullname:
-            formData.fullname,
-          email:
-            formData.email,
-          password:
-            formData.password,
+          businessName: formData.businessName,
+          fullname: formData.fullname,
+          email: formData.email,
+          password: formData.password,
         }
       );
 
       setMessage(res.data.message);
 
       setTimeout(() => {
-
         navigate("/login");
-
       }, 1500);
 
     } catch (err) {
-
       setMessage(
         err.response?.data?.message ||
         "Registration failed."
       );
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   return (
     <div className="container py-5">
-
       <div
         className="card shadow border-0 mx-auto"
         style={{ maxWidth: "500px" }}
       >
-
         <div className="card-body p-4">
-
           <h3 className="text-center text-primary mb-4">
             Create Business Account
           </h3>
 
           {message && (
-            <div className="alert alert-info">
+            <div
+              className={`alert ${
+                message.includes("success")
+                  ? "alert-success"
+                  : "alert-danger"
+              }`}
+            >
               {message}
             </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-          >
-
+          <form onSubmit={handleSubmit}>
             <div className="mb-3">
-
               <label className="form-label">
                 Business Name
               </label>
@@ -122,19 +97,13 @@ export default function Register() {
                 className="form-control"
                 name="businessName"
                 placeholder="KellyTech Solutions"
-                value={
-                  formData.businessName
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.businessName}
+                onChange={handleChange}
                 required
               />
-
             </div>
 
             <div className="mb-3">
-
               <label className="form-label">
                 Full Name
               </label>
@@ -143,19 +112,13 @@ export default function Register() {
                 type="text"
                 className="form-control"
                 name="fullname"
-                value={
-                  formData.fullname
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.fullname}
+                onChange={handleChange}
                 required
               />
-
             </div>
 
             <div className="mb-3">
-
               <label className="form-label">
                 Email
               </label>
@@ -164,19 +127,13 @@ export default function Register() {
                 type="email"
                 className="form-control"
                 name="email"
-                value={
-                  formData.email
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.email}
+                onChange={handleChange}
                 required
               />
-
             </div>
 
             <div className="mb-3">
-
               <label className="form-label">
                 Password
               </label>
@@ -185,19 +142,13 @@ export default function Register() {
                 type="password"
                 className="form-control"
                 name="password"
-                value={
-                  formData.password
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.password}
+                onChange={handleChange}
                 required
               />
-
             </div>
 
             <div className="mb-4">
-
               <label className="form-label">
                 Confirm Password
               </label>
@@ -206,34 +157,24 @@ export default function Register() {
                 type="password"
                 className="form-control"
                 name="confirmPassword"
-                value={
-                  formData.confirmPassword
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 required
               />
-
             </div>
 
             <button
+              type="submit"
               className="btn btn-primary w-100"
               disabled={loading}
             >
-
               {loading
                 ? "Creating Account..."
                 : "Create Account"}
-
             </button>
-
           </form>
-
         </div>
-
       </div>
-
     </div>
   );
 }

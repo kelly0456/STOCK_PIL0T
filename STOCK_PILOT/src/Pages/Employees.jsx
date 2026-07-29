@@ -3,6 +3,8 @@ import axios from "axios";
 
 export default function Employees() {
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const token = localStorage.getItem("token");
 
   const [employees, setEmployees] = useState([]);
@@ -28,8 +30,8 @@ export default function Employees() {
 
     try {
 
-      const res = await axios.get(
-        "http://localhost:5000/api/employees",
+     const res = await axios.get(
+  `${API_URL}/employees`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -82,11 +84,11 @@ export default function Employees() {
 
     try {
 
-      await axios.post(
+   await axios.post(
 
-        "http://localhost:5000/api/employees",
+  `${API_URL}/employees`,
 
-        employee,
+  employee,
 
         {
           headers: {

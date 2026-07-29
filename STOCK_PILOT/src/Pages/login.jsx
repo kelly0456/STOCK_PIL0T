@@ -13,6 +13,9 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Backend API URL from .env
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -29,7 +32,7 @@ export default function Login() {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${API_URL}/auth/login`,
         formData
       );
 
@@ -66,14 +69,11 @@ export default function Login() {
 
   return (
     <div className="container py-5">
-
       <div
         className="card shadow border-0 mx-auto"
         style={{ maxWidth: "420px" }}
       >
-
         <div className="card-body p-4">
-
           <h3 className="text-center text-primary mb-2">
             Welcome Back
           </h3>
@@ -95,7 +95,6 @@ export default function Login() {
           )}
 
           <form onSubmit={handleSubmit}>
-
             <div className="mb-3">
               <label className="form-label">
                 Email Address
@@ -145,7 +144,6 @@ export default function Login() {
                 "Login"
               )}
             </button>
-
           </form>
 
           <hr />
@@ -159,11 +157,8 @@ export default function Login() {
               Register
             </Link>
           </p>
-
         </div>
-
       </div>
-
     </div>
   );
 }

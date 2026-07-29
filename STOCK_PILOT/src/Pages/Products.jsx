@@ -1,55 +1,116 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function Products() {
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [products, setProducts] = useState([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  // ==========================
+  // Load Products
+  // ==========================
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios.get(`${API_URL}/products`);
+
+      setProducts(res.data);
+
+    } catch (err) {
+      console.log(err);
+      setMessage("Failed to load products.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("products")) || [];
-    setProducts(saved);
+    fetchProducts();
   }, []);
 
-  const saveProducts = (updated) => {
-    setProducts(updated);
-    localStorage.setItem("products", JSON.stringify(updated));
+  // ==========================
+  // Add Product
+  // ==========================
+  const addProduct = async () => {
+
+    if (!name || !price || !stock) {
+      return setMessage("Please fill in all fields.");
+    }
+
+    try {
+
+      await axios.post(`${API_URL}/products`, {
+        name,
+        price: Number(price),
+        stock: Number(stock),
+        sold: 0,
+      });
+
+      setName("");
+      setPrice("");
+      setStock("");
+      setMessage("Product added successfully.");
+
+      fetchProducts();
+
+    } catch (err) {
+
+      console.log(err);
+
+      setMessage("Failed to add product.");
+
+    }
   };
 
-  const addProduct = () => {
-    if (!name || !price || !stock) return;
+  // ==========================
+  // Delete Product
+  // ==========================
+  const deleteProduct = async (id) => {
 
-    const newProduct = {
-      id: Date.now(),
-      name,
-      price: Number(price),
-      stock: Number(stock),
-      sold: 0
-    };
+    if (!window.confirm("Delete this product?")) return;
 
-    const updated = [...products, newProduct];
-    saveProducts(updated);
+    try {
 
-    setName("");
-    setPrice("");
-    setStock("");
+      await axios.delete(`${API_URL}/products/${id}`);
+
+      setMessage("Product deleted.");
+
+      fetchProducts();
+
+    } catch (err) {
+
+      console.log(err);
+
+      setMessage("Delete failed.");
+
+    }
+
   };
 
-  const deleteProduct = (id) => {
-    const updated = products.filter(p => p.id !== id);
-    saveProducts(updated);
+  // ==========================
+  // Badge Color
+  // ==========================
+  const getStockColor = (stock) => {
+    if (stock === 0) return "danger";
+    if (stock <= 15) return "secondary";
+    if (stock <= 30) return "warning";
+    return "success";
   };
-
- const getStockColor = (stock) => {
-  if (stock === 0) return "danger";
-  if (stock >= 1 && stock <= 15) return "pink";
-  if (stock >= 16 && stock <= 30) return "warning";
-  return "success";
-};
 
   const getBadgeStyle = (stock) => {
-    if (stock >= 1 && stock <= 15)
-      return { backgroundColor: "#d45dec", color: "white" }; // Purple custom
+    if (stock >= 1 && stock <= 15) {
+      return {
+        backgroundColor: "#d45dec",
+        color: "#fff",
+      };
+    }
+
     return {};
   };
 
@@ -57,68 +118,130 @@ export default function Products() {
     <>
       <h3 className="mb-3">Products</h3>
 
-      <div className="card p-4 shadow mb-4 col-md-6">
+      {message && (
+        <div className="alert alert-info">
+          {message}
+        </div>
+      )}
+
+      <div className="card shadow p-4 mb-4 col-md-6">
+
         <input
           className="form-control mb-2"
           placeholder="Product Name"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
         />
+
         <input
           type="number"
           className="form-control mb-2"
           placeholder="Price"
           value={price}
-          onChange={e => setPrice(e.target.value)}
+          onChange={(e) => setPrice(e.target.value)}
         />
+
         <input
           type="number"
-          className="form-control mb-2"
+          className="form-control mb-3"
           placeholder="Stock"
           value={stock}
-          onChange={e => setStock(e.target.value)}
+          onChange={(e) => setStock(e.target.value)}
         />
-        <button onClick={addProduct} className="btn btn-primary w-100">
+
+        <button
+          onClick={addProduct}
+          className="btn btn-primary"
+        >
           Add Product
         </button>
+
       </div>
 
-      <table className="table table-bordered shadow">
-        <thead className="table-dark">
-          <tr>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Sold</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map(p => (
-            <tr key={p.id}>
-              <td>{p.name}</td>
-              <td>KES {p.price}</td>
-              <td>
-                <span
-                  className={`badge bg-${getStockColor(p.stock)}`}
-                  style={getBadgeStyle(p.stock)}
-                >
-                  {p.stock}
-                </span>
-              </td>
-              <td>{p.sold || 0}</td>
-              <td>
-                <button
-                  onClick={() => deleteProduct(p.id)}
-                  className="btn btn-sm btn-danger"
-                >
-                  Delete
-                </button>
-              </td>
+      {loading ? (
+        <div className="text-center">
+          <div className="spinner-border"></div>
+        </div>
+      ) : (
+        <table className="table table-bordered shadow">
+
+          <thead className="table-dark">
+
+            <tr>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Sold</th>
+              <th>Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+
+          </thead>
+
+          <tbody>
+
+            {products.length === 0 ? (
+
+              <tr>
+
+                <td
+                  colSpan="5"
+                  className="text-center"
+                >
+                  No products found.
+                </td>
+
+              </tr>
+
+            ) : (
+
+              products.map((p) => (
+
+                <tr key={p._id}>
+
+                  <td>{p.name}</td>
+
+                  <td>KES {p.price}</td>
+
+                  <td>
+
+                    <span
+                      className={`badge bg-${getStockColor(
+                        p.stock
+                      )}`}
+                      style={getBadgeStyle(
+                        p.stock
+                      )}
+                    >
+                      {p.stock}
+                    </span>
+
+                  </td>
+
+                  <td>{p.sold}</td>
+
+                  <td>
+
+                    <button
+                      onClick={() =>
+                        deleteProduct(p._id)
+                      }
+                      className="btn btn-danger btn-sm"
+                    >
+                      Delete
+                    </button>
+
+                  </td>
+
+                </tr>
+
+              ))
+
+            )}
+
+          </tbody>
+
+        </table>
+      )}
     </>
   );
 }
