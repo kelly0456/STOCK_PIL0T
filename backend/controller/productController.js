@@ -1,21 +1,41 @@
-const Product = require("../models/Product");
+const Product = require("../models/product");
 
+// ===============================
+// Get All Products
+// ===============================
 exports.getProducts = async (req, res) => {
-  const products = await Product.find();
-  res.json(products);
-};
-
-exports.addProduct = async (req, res) => {
-  const product = await Product.create(req.body);
-  res.status(201).json(product);
-};
-
-exports.deleteProduct = async (req, res) => {
-  await Product.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
-
-  exports.updateProduct = async (req, res) => {
   try {
+    const products = await Product.find();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// Add Product
+// ===============================
+exports.addProduct = async (req, res) => {
+  try {
+    const product = await Product.create(req.body);
+
+    res.status(201).json(product);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// Update Product
+// ===============================
+exports.updateProduct = async (req, res) => {
+  try {
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -39,4 +59,22 @@ exports.deleteProduct = async (req, res) => {
     });
   }
 };
+
+// ===============================
+// Delete Product
+// ===============================
+exports.deleteProduct = async (req, res) => {
+  try {
+
+    await Product.findByIdAndDelete(req.params.id);
+
+    res.json({
+      message: "Product deleted successfully.",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
