@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 
 // =======================================
@@ -6,7 +6,6 @@ const bcrypt = require("bcryptjs");
 // =======================================
 exports.getEmployees = async (req, res) => {
   try {
-
     const employees = await User.find({
       createdBy: req.user.id,
     }).select("-password");
@@ -14,11 +13,9 @@ exports.getEmployees = async (req, res) => {
     res.json(employees);
 
   } catch (error) {
-
     res.status(500).json({
       message: "Server Error",
     });
-
   }
 };
 
@@ -26,9 +23,7 @@ exports.getEmployees = async (req, res) => {
 // Add Employee
 // =======================================
 exports.addEmployee = async (req, res) => {
-
   try {
-
     const {
       fullname,
       email,
@@ -45,36 +40,22 @@ exports.addEmployee = async (req, res) => {
       });
     }
 
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const admin = await User.findById(req.user.id);
 
-    const employee =
-      await User.create({
-
-        businessName:
-          admin.businessName,
-
-        fullname,
-
-        email,
-
-        phone,
-
-        position,
-
-        password: hashedPassword,
-
-        role: "staff",
-
-        active: true,
-
-        mustChangePassword: true,
-
-        createdBy: req.user.id,
-
-      });
+    const employee = await User.create({
+      businessName: admin.businessName,
+      fullname,
+      email,
+      phone,
+      position,
+      password: hashedPassword,
+      role: "staff",
+      active: true,
+      mustChangePassword: true,
+      createdBy: req.user.id,
+    });
 
     res.status(201).json({
       message: "Employee created successfully.",
@@ -82,46 +63,31 @@ exports.addEmployee = async (req, res) => {
     });
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       message: "Server Error",
     });
-
   }
-
 };
 
 // =======================================
 // Update Employee
 // =======================================
 exports.updateEmployee = async (req, res) => {
-
   try {
-
-    const employee =
-      await User.findById(req.params.id);
+    const employee = await User.findById(req.params.id);
 
     if (!employee) {
-
       return res.status(404).json({
         message: "Employee not found.",
       });
-
     }
 
-    employee.fullname =
-      req.body.fullname || employee.fullname;
-
-    employee.email =
-      req.body.email || employee.email;
-
-    employee.phone =
-      req.body.phone || employee.phone;
-
-    employee.position =
-      req.body.position || employee.position;
+    employee.fullname = req.body.fullname || employee.fullname;
+    employee.email = req.body.email || employee.email;
+    employee.phone = req.body.phone || employee.phone;
+    employee.position = req.body.position || employee.position;
 
     await employee.save();
 
@@ -130,31 +96,23 @@ exports.updateEmployee = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       message: "Server Error",
     });
-
   }
-
 };
 
 // =======================================
 // Activate / Suspend Employee
 // =======================================
 exports.toggleEmployee = async (req, res) => {
-
   try {
-
-    const employee =
-      await User.findById(req.params.id);
+    const employee = await User.findById(req.params.id);
 
     if (!employee) {
-
       return res.status(404).json({
         message: "Employee not found.",
       });
-
     }
 
     employee.active = !employee.active;
@@ -168,36 +126,26 @@ exports.toggleEmployee = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       message: "Server Error",
     });
-
   }
-
 };
 
 // =======================================
 // Delete Employee
 // =======================================
 exports.deleteEmployee = async (req, res) => {
-
   try {
-
-    await User.findByIdAndDelete(
-      req.params.id
-    );
+    await User.findByIdAndDelete(req.params.id);
 
     res.json({
       message: "Employee deleted.",
     });
 
   } catch (error) {
-
     res.status(500).json({
       message: "Server Error",
     });
-
   }
-
 };
