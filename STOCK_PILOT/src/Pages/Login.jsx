@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
+
+
 
 export default function Login() {
   const navigate = useNavigate();
@@ -12,6 +16,7 @@ export default function Login() {
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Backend API URL from .env
   const API_URL = import.meta.env.VITE_API_URL;
@@ -31,10 +36,10 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        `${API_URL}/auth/login`,
-        formData
-      );
+    const res = await axios.post(
+  `${API_URL}/api/auth/login`,
+  formData
+);
 
       // Save login information
       localStorage.setItem("token", res.data.token);
@@ -93,13 +98,11 @@ export default function Login() {
               {message}
             </div>
           )}
-
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <label className="form-label">
                 Email Address
               </label>
-
               <input
                 type="email"
                 name="email"
@@ -110,23 +113,31 @@ export default function Login() {
                 required
               />
             </div>
+        <div className="mb-4">
+  <label className="form-label">
+    Password
+  </label>
 
-            <div className="mb-4">
-              <label className="form-label">
-                Password
-              </label>
+  <div className="input-group">
+    <input
+      type={showPassword ? "text" : "password"}
+      name="password"
+      className="form-control"
+      placeholder="Enter your password"
+      value={formData.password}
+      onChange={handleChange}
+      required
+    />
 
-              <input
-                type="password"
-                name="password"
-                className="form-control"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
+    <button
+      type="button"
+      className="btn btn-outline-secondary"
+      onClick={() => setShowPassword(!showPassword)}
+    >
+      {showPassword ? <FaEyeSlash /> : <FaEye />}
+    </button>
+  </div>
+</div>
             <button
               type="submit"
               className="btn btn-primary w-100"
@@ -145,9 +156,7 @@ export default function Login() {
               )}
             </button>
           </form>
-
           <hr />
-
           <p className="text-center mb-0">
             Don't have a business account?{" "}
             <Link

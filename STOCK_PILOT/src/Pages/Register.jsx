@@ -1,19 +1,38 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Register() {
+  const [showPassword, setShowPassword] = useState(false);
+const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const [formData, setFormData] = useState({
-    businessName: "",
-    fullname: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+<div className="mb-3">
+  <label className="form-label">Password</label>
+
+  <div className="input-group">
+    <input
+      type={showPassword ? "text" : "password"}
+      className="form-control"
+      name="password"
+      placeholder="Enter password"
+      value={formData.password}
+      onChange={handleChange}
+      required
+    />
+
+    <button
+      type="button"
+      className="btn btn-outline-secondary"
+      onClick={() => setShowPassword(!showPassword)}
+    >
+      {showPassword ? <FaEyeSlash /> : <FaEye />}
+    </button>
+  </div>
+</div>
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -135,25 +154,46 @@ export default function Register() {
                 required
               />
             </div>
+<div className="mb-4">
+  <label className="form-label">Confirm Password</label>
 
-            <div className="mb-4">
-              <label className="form-label">Confirm Password</label>
-              <input
-                type="password"
-                className="form-control"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-              />
-            </div>
+  <div className="input-group">
+    <input
+      type={showConfirmPassword ? "text" : "password"}
+      className="form-control"
+      name="confirmPassword"
+      placeholder="Confirm password"
+      value={formData.confirmPassword}
+      onChange={handleChange}
+      required
+    />
+
+    <button
+      type="button"
+      className="btn btn-outline-secondary"
+      onClick={() =>
+        setShowConfirmPassword(!showConfirmPassword)
+      }
+    >
+      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+    </button>
+  </div>
+</div>
 
             <button
               type="submit"
               className="btn btn-primary w-100"
               disabled={loading}
             >
-              {loading ? "Creating Account..." : "Create Account"}
+             <>
+  {loading && (
+    <span
+      className="spinner-border spinner-border-sm me-2"
+      role="status"
+    ></span>
+  )}
+  {loading ? "Creating Account..." : "Create Account"}
+</>
             </button>
           </form>
         </div>
