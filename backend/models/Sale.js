@@ -1,9 +1,17 @@
 const mongoose = require("mongoose");
 
+// =======================================
+// Sale Item Schema
+// =======================================
 const saleItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
+    required: true,
+  },
+
+  name: {
+    type: String,
     required: true,
   },
 
@@ -18,10 +26,25 @@ const saleItemSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
+
+  subtotal: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
 });
 
+// =======================================
+// Sale Schema
+// =======================================
 const saleSchema = new mongoose.Schema(
   {
+    invoiceNumber: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
     items: {
       type: [saleItemSchema],
       required: true,
@@ -33,10 +56,35 @@ const saleSchema = new mongoose.Schema(
       min: 0,
     },
 
+    discount: {
+      type: Number,
+      default: 0,
+    },
+
     paymentMethod: {
       type: String,
-      enum: ["Cash", "M-Pesa", "Card"],
+      enum: ["Cash", "M-Pesa", "Bank"],
       default: "Cash",
+    },
+
+    amountReceived: {
+      type: Number,
+      default: 0,
+    },
+
+    phone: {
+      type: String,
+      default: "",
+    },
+
+    bankName: {
+      type: String,
+      default: "",
+    },
+
+    bankReference: {
+      type: String,
+      default: "",
     },
 
     soldBy: {

@@ -14,7 +14,6 @@ exports.getSales = async (req, res) => {
       success: true,
       sales,
     });
-
   } catch (error) {
     console.error("========== GET SALES ERROR ==========");
     console.error(error);
@@ -31,8 +30,17 @@ exports.getSales = async (req, res) => {
 // =======================================
 exports.createSale = async (req, res) => {
   try {
-    const { items, paymentMethod } = req.body;
+    const {
+      items,
+      paymentMethod,
+      discount = 0,
+      amountReceived = 0,
+      phone = "",
+      bankName = "",
+      bankReference = "",
+    } = req.body;
 
+    // Validate items
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -43,11 +51,16 @@ exports.createSale = async (req, res) => {
     let total = 0;
     const saleItems = [];
 
+    // ============================
+    // Process each item
+    // ============================
     for (const item of items) {
-      if (!item.productId || !item.quantity) {
+      const quantity = Number(item.quantity);
+
+      if (!item.productId || isNaN(quantity) || quantity <= 0) {
         return res.status(400).json({
           success: false,
-          message: "Each item must contain productId and quantity.",
+          message: "Each item must contain a valid productId and quantity.",
         });
       }
 
@@ -60,38 +73,50 @@ exports.createSale = async (req, res) => {
         });
       }
 
-      if (product.stock < item.quantity) {
+      const currentStock = Number(product.stock || 0);
+      const currentSold = Number(product.sold || 0);
+
+      if (currentStock < quantity) {
         return res.status(400).json({
           success: false,
-          message: `${product.name} has only ${product.stock} item(s) remaining.`,
+          message: `${product.name} has only ${currentStock} item(s) remaining.`,
         });
       }
 
-      // Update stock
-      product.stock -= item.quantity;
-      product.sold += item.quantity;
+      // Update stock and sold
+      product.stock = currentStock - quantity;
+      product.sold = currentSold + quantity;
 
       await product.save();
 
-      const subtotal = product.price * item.quantity;
+      const subtotal = Number(product.price) * quantity;
       total += subtotal;
 
       saleItems.push({
         product: product._id,
         name: product.name,
         price: product.price,
-        quantity: item.quantity,
+        quantity,
         subtotal,
       });
     }
 
+    // Apply discount
+    const finalTotal = total - Number(discount || 0);
+
+    // Create invoice
     const invoiceNumber = `INV-${Date.now()}`;
 
     const sale = await Sale.create({
       invoiceNumber,
       items: saleItems,
-      total,
+      total: finalTotal,
+      discount: Number(discount),
       paymentMethod: paymentMethod || "Cash",
+      amountReceived: Number(amountReceived),
+      phone,
+      bankName,
+      bankReference,
       soldBy: req.user.id,
     });
 
@@ -100,7 +125,6 @@ exports.createSale = async (req, res) => {
       message: "Sale recorded successfully.",
       sale,
     });
-
   } catch (error) {
     console.error("========== CREATE SALE ERROR ==========");
     console.error(error);
