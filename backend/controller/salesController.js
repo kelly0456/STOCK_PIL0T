@@ -95,10 +95,24 @@ exports.createSale = async (req, res) => {
       }
 
       // Update Stock
-      product.stock -= quantity;
-      product.sold += quantity;
+     // Convert values to numbers
+const currentStock = Number(product.stock || 0);
+const currentSold = Number(product.sold || 0);
 
-      await product.save();
+// Check stock
+if (currentStock < quantity) {
+  return res.status(400).json({
+    success: false,
+    message: "Not enough stock available.",
+  });
+}
+
+// Update values
+product.stock = currentStock - quantity;
+product.sold = currentSold + quantity;
+
+// Save product
+await product.save();
 
       const subtotal = product.price * quantity;
 
