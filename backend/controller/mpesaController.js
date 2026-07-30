@@ -75,8 +75,16 @@ const sendStkPush = async ({ phone, amount, accountReference, transactionDesc })
   const normalizedPhone = normalizePhone(phone);
   const accessToken = await getAccessTokenInternal();
   const timestamp = getTimestamp();
+  const passkey = process.env.MPESA_PASSKEY || process.env.DARAJA_PASSKEY;
+
+  if (!passkey) {
+    throw new Error(
+      "Missing M-Pesa passkey. Set MPESA_PASSKEY or DARAJA_PASSKEY in .env."
+    );
+  }
+
   const password = Buffer.from(
-    `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
+    `${process.env.MPESA_SHORTCODE}${passkey}${timestamp}`
   ).toString("base64");
 
   const response = await axios.post(
