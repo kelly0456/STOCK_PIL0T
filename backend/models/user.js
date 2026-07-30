@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema(
     businessName: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
 
