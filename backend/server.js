@@ -41,6 +41,16 @@ app.get("/", (req, res) => {
 });
 
 // =====================================
+// TEST ROUTE
+// =====================================
+app.get("/api/test", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "✅ API Test Route Working!",
+  });
+});
+
+// =====================================
 // API Routes
 // =====================================
 app.use("/api/auth", authRoutes);
