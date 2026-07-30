@@ -30,6 +30,17 @@ exports.getSales = async (req, res) => {
 // =======================================
 exports.createSale = async (req, res) => {
   try {
+
+    // ===================================
+    // Ensure user is authenticated
+    // ===================================
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. Please login again.",
+      });
+    }
+
     const {
       items,
       paymentMethod,
@@ -40,27 +51,30 @@ exports.createSale = async (req, res) => {
       bankReference = "",
     } = req.body;
 
-    // Validate items
+    // ===================================
+    // Validate Cart
+    // ===================================
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "No sale items supplied.",
+        message: "Cart is empty.",
       });
     }
 
     let total = 0;
     const saleItems = [];
 
-    // ============================
-    // Process each item
-    // ============================
+    // ===================================
+    // Process Sale Items
+    // ===================================
     for (const item of items) {
+
       const quantity = Number(item.quantity);
 
-      if (!item.productId || isNaN(quantity) || quantity <= 0) {
+      if (!item.productId || quantity <= 0) {
         return res.status(400).json({
           success: false,
-          message: "Each item must contain a valid productId and quantity.",
+          message: "Invalid sale item.",
         });
       }
 
@@ -73,40 +87,58 @@ exports.createSale = async (req, res) => {
         });
       }
 
-      const currentStock = Number(product.stock || 0);
-      const currentSold = Number(product.sold || 0);
-
-      if (currentStock < quantity) {
+      if (product.stock < quantity) {
         return res.status(400).json({
           success: false,
-          message: `${product.name} has only ${currentStock} item(s) remaining.`,
+          message: `${product.name} has only ${product.stock} item(s) remaining.`,
         });
       }
 
-      // Update stock and sold
-      product.stock = currentStock - quantity;
-      product.sold = currentSold + quantity;
+      // Update Stock
+      product.stock -= quantity;
+      product.sold += quantity;
 
       await product.save();
 
-      const subtotal = Number(product.price) * quantity;
+      const subtotal = product.price * quantity;
+
       total += subtotal;
 
       saleItems.push({
         product: product._id,
         name: product.name,
-        price: product.price,
         quantity,
+        price: product.price,
         subtotal,
       });
     }
 
-    // Apply discount
-    const finalTotal = total - Number(discount || 0);
+    // ===================================
+    // Apply Discount
+    // ===================================
+    const finalTotal = Math.max(0, total - Number(discount));
 
-    // Create invoice
+    // ===================================
+    // Cash Validation
+    // ===================================
+    if (
+      paymentMethod === "Cash" &&
+      Number(amountReceived) < finalTotal
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount received is less than the total.",
+      });
+    }
+
+    // ===================================
+    // Generate Invoice
+    // ===================================
     const invoiceNumber = `INV-${Date.now()}`;
 
+    // ===================================
+    // Create Sale
+    // ===================================
     const sale = await Sale.create({
       invoiceNumber,
       items: saleItems,
@@ -117,17 +149,20 @@ exports.createSale = async (req, res) => {
       phone,
       bankName,
       bankReference,
-      soldBy: req.user.id,
+      soldBy: req.user._id,
     });
 
     return res.status(201).json({
       success: true,
-      message: "Sale recorded successfully.",
+      message: "Sale completed successfully.",
       sale,
     });
+
   } catch (error) {
+
     console.error("========== CREATE SALE ERROR ==========");
     console.error(error);
+    console.error(error.stack);
 
     return res.status(500).json({
       success: false,

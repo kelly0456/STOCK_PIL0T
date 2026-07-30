@@ -6,8 +6,10 @@ const {
   createSale,
 } = require("../controller/salesController");
 
-router.get("/", getSales);
+// Import authentication middleware
+const { protect } = require("../middleware/authMiddleware");
 
-router.post("/", createSale);
+router.get("/", protect, getSales);
+router.post("/", protect, createSale);
 
 module.exports = router;
