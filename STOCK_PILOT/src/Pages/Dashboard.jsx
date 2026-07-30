@@ -34,14 +34,14 @@ export default function Dashboard() {
 
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(
-        `${API_URL}/products`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    const res = await axios.get(
+  `${API_URL}/api/products`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
       setProducts(res.data);
 
