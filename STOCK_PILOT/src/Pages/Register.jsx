@@ -4,35 +4,20 @@ import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Register() {
-  const [showPassword, setShowPassword] = useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-<div className="mb-3">
-  <label className="form-label">Password</label>
+  const [formData, setFormData] = useState({
+    businessName: "",
+    fullname: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-  <div className="input-group">
-    <input
-      type={showPassword ? "text" : "password"}
-      className="form-control"
-      name="password"
-      placeholder="Enter password"
-      value={formData.password}
-      onChange={handleChange}
-      required
-    />
-
-    <button
-      type="button"
-      className="btn btn-outline-secondary"
-      onClick={() => setShowPassword(!showPassword)}
-    >
-      {showPassword ? <FaEyeSlash /> : <FaEye />}
-    </button>
-  </div>
-</div>
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -50,32 +35,28 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     setMessage("");
 
     if (formData.password !== formData.confirmPassword) {
-      return setMessage("Passwords do not match.");
+      setMessage("Passwords do not match.");
+      return;
     }
 
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        `${API_URL}/api/auth/register`,
-        {
-          businessName: formData.businessName,
-          fullname: formData.fullname,
-          email: formData.email,
-          password: formData.password,
-        }
-      );
+      const res = await axios.post(`${API_URL}/api/auth/register`, {
+        businessName: formData.businessName,
+        fullname: formData.fullname,
+        email: formData.email,
+        password: formData.password,
+      });
 
       setMessage(res.data.message);
 
       setTimeout(() => {
         navigate("/login");
       }, 1500);
-
     } catch (err) {
       setMessage(
-        err.response?.data?.message ||
-        "Registration failed."
+        err.response?.data?.message || "Registration failed."
       );
     } finally {
       setLoading(false);
@@ -106,6 +87,7 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
           )}
 
           <form onSubmit={handleSubmit}>
+            {/* Business Name */}
             <div className="mb-3">
               <label className="form-label">Business Name</label>
               <input
@@ -119,81 +101,103 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
               />
             </div>
 
+            {/* Full Name */}
             <div className="mb-3">
               <label className="form-label">Full Name</label>
               <input
                 type="text"
                 className="form-control"
                 name="fullname"
+                placeholder="John Doe"
                 value={formData.fullname}
                 onChange={handleChange}
                 required
               />
             </div>
 
+            {/* Email */}
             <div className="mb-3">
-              <label className="form-label">Email</label>
+              <label className="form-label">Email Address</label>
               <input
                 type="email"
                 className="form-control"
                 name="email"
+                placeholder="example@email.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
               />
             </div>
 
+            {/* Password */}
             <div className="mb-3">
               <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+
+              <div className="input-group">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control"
+                  name="password"
+                  placeholder="Enter password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
-<div className="mb-4">
-  <label className="form-label">Confirm Password</label>
 
-  <div className="input-group">
-    <input
-      type={showConfirmPassword ? "text" : "password"}
-      className="form-control"
-      name="confirmPassword"
-      placeholder="Confirm password"
-      value={formData.confirmPassword}
-      onChange={handleChange}
-      required
-    />
+            {/* Confirm Password */}
+            <div className="mb-4">
+              <label className="form-label">Confirm Password</label>
 
-    <button
-      type="button"
-      className="btn btn-outline-secondary"
-      onClick={() =>
-        setShowConfirmPassword(!showConfirmPassword)
-      }
-    >
-      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-    </button>
-  </div>
-</div>
+              <div className="input-group">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="form-control"
+                  name="confirmPassword"
+                  placeholder="Confirm password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() =>
+                    setShowConfirmPassword(!showConfirmPassword)
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <FaEyeSlash />
+                  ) : (
+                    <FaEye />
+                  )}
+                </button>
+              </div>
+            </div>
 
             <button
               type="submit"
               className="btn btn-primary w-100"
               disabled={loading}
             >
-             <>
-  {loading && (
-    <span
-      className="spinner-border spinner-border-sm me-2"
-      role="status"
-    ></span>
-  )}
-  {loading ? "Creating Account..." : "Create Account"}
-</>
+              {loading && (
+                <span
+                  className="spinner-border spinner-border-sm me-2"
+                  role="status"
+                ></span>
+              )}
+
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
         </div>
