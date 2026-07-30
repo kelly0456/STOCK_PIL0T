@@ -34,7 +34,11 @@ export default function Employees() {
         }
       );
 
-      setEmployees(res.data);
+      const employeesData = Array.isArray(res.data)
+        ? res.data
+        : res.data.employees || [];
+
+      setEmployees(employeesData);
     } catch (error) {
       console.error(error);
       setMessage(
