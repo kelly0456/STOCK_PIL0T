@@ -18,12 +18,12 @@ export default function Products() {
     try {
       setLoading(true);
 
-      const res = await axios.get(`${API_URL}/products`);
+      const res = await axios.get(`${API_URL}/api/products`);
 
       setProducts(res.data);
 
     } catch (err) {
-      console.log(err);
+      console.error(err);
       setMessage("Failed to load products.");
     } finally {
       setLoading(false);
@@ -45,7 +45,7 @@ export default function Products() {
 
     try {
 
-      await axios.post(`${API_URL}/products`, {
+      await axios.post(`${API_URL}/api/products`, {
         name,
         price: Number(price),
         stock: Number(stock),
@@ -55,16 +55,18 @@ export default function Products() {
       setName("");
       setPrice("");
       setStock("");
+
       setMessage("Product added successfully.");
 
       fetchProducts();
 
     } catch (err) {
 
-      console.log(err);
+      console.error(err);
 
-      setMessage("Failed to add product.");
-
+      setMessage(
+        err.response?.data?.message || "Failed to add product."
+      );
     }
   };
 
@@ -77,24 +79,24 @@ export default function Products() {
 
     try {
 
-      await axios.delete(`${API_URL}/products/${id}`);
+      await axios.delete(`${API_URL}/api/products/${id}`);
 
-      setMessage("Product deleted.");
+      setMessage("Product deleted successfully.");
 
       fetchProducts();
 
     } catch (err) {
 
-      console.log(err);
+      console.error(err);
 
-      setMessage("Delete failed.");
-
+      setMessage(
+        err.response?.data?.message || "Delete failed."
+      );
     }
-
   };
 
   // ==========================
-  // Badge Color
+  // Badge Colors
   // ==========================
   const getStockColor = (stock) => {
     if (stock === 0) return "danger";
@@ -166,7 +168,6 @@ export default function Products() {
         <table className="table table-bordered shadow">
 
           <thead className="table-dark">
-
             <tr>
               <th>Name</th>
               <th>Price</th>
@@ -174,7 +175,6 @@ export default function Products() {
               <th>Sold</th>
               <th>Action</th>
             </tr>
-
           </thead>
 
           <tbody>
@@ -182,14 +182,9 @@ export default function Products() {
             {products.length === 0 ? (
 
               <tr>
-
-                <td
-                  colSpan="5"
-                  className="text-center"
-                >
+                <td colSpan="5" className="text-center">
                   No products found.
                 </td>
-
               </tr>
 
             ) : (
@@ -203,33 +198,23 @@ export default function Products() {
                   <td>KES {p.price}</td>
 
                   <td>
-
                     <span
-                      className={`badge bg-${getStockColor(
-                        p.stock
-                      )}`}
-                      style={getBadgeStyle(
-                        p.stock
-                      )}
+                      className={`badge bg-${getStockColor(p.stock)}`}
+                      style={getBadgeStyle(p.stock)}
                     >
                       {p.stock}
                     </span>
-
                   </td>
 
                   <td>{p.sold}</td>
 
                   <td>
-
                     <button
-                      onClick={() =>
-                        deleteProduct(p._id)
-                      }
                       className="btn btn-danger btn-sm"
+                      onClick={() => deleteProduct(p._id)}
                     >
                       Delete
                     </button>
-
                   </td>
 
                 </tr>
