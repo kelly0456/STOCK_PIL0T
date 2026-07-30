@@ -41,6 +41,8 @@ export default function Sales() {
 
   // Customer phone number (used for M-Pesa)
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [phonePrompt, setPhonePrompt] = useState("");
+  const [phonePromptType, setPhonePromptType] = useState("text-muted");
 
   // Discount applied to the sale
   const [discount, setDiscount] = useState(0);
@@ -777,19 +779,28 @@ export default function Sales() {
             className="form-control"
             placeholder="2547XXXXXXXX"
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setPhoneNumber(value);
+
+              if (!value) {
+                setPhonePrompt("Enter the customer's M-Pesa number.");
+                setPhonePromptType("text-muted");
+              } else if (!/^\d{9,12}$/.test(value.replace(/\D/g, ""))) {
+                setPhonePrompt("Number should be 9 to 12 digits.");
+                setPhonePromptType("text-danger");
+              } else {
+                setPhonePrompt("Phone number looks good.");
+                setPhonePromptType("text-success");
+              }
+            }}
           />
-        </div>
-      )}
 
-      {paymentMethod === "Bank" && (
-        <>
-          <div className="col-md-4 mb-3">
-            <label className="form-label">
-              Bank Name
-            </label>
-
-            <input
+          {phonePrompt && (
+            <div className={`form-text ${phonePromptType}`}>
+              {phonePrompt}
+            </div>
+          )}
               type="text"
               className="form-control"
               value={bankName}
