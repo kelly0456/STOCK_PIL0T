@@ -420,34 +420,21 @@ export default function Sales() {
       // ===============================
 
       const response = await axios.post(
-
         `${API_URL}/api/sales`,
-
         {
-
           items: cart.map((item) => ({
             productId: item._id,
             quantity: item.qty,
           })),
-
           paymentMethod,
-
           phone: phoneNumber,
-
           bankName,
-
           bankReference,
-
           amountReceived: parsedAmountReceived,
-
           discount: parsedDiscount,
-
           totalAmount: total,
-
           invoiceNumber,
-          },
         }
-
       );
 
       // ===============================
@@ -801,6 +788,17 @@ export default function Sales() {
               {phonePrompt}
             </div>
           )}
+        </div>
+      )}
+
+      {paymentMethod === "Bank" && (
+        <>
+          <div className="col-md-4 mb-3">
+            <label className="form-label">
+              Bank Name
+            </label>
+
+            <input
               type="text"
               className="form-control"
               value={bankName}
