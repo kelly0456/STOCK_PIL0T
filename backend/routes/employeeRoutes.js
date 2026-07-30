@@ -1,9 +1,8 @@
 const express = require("express");
-
 const router = express.Router();
 
-const auth = require("../middleware/authMiddleware");
-const admin = require("../middleware/adminMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
 
 const {
   getEmployees,
@@ -11,21 +10,50 @@ const {
   updateEmployee,
   toggleEmployee,
   deleteEmployee,
-} = require("../controller/EmployeeController");
+} = require("../controller/employeeController");
 
-// View Employees
-router.get("/", auth, admin, getEmployees);
+// ===============================
+// Employee Routes
+// ===============================
 
-// Add Employee
-router.post("/", auth, admin, addEmployee);
+// Get all employees
+router.get(
+  "/",
+  authMiddleware,
+  adminMiddleware,
+  getEmployees
+);
 
-// Edit Employee
-router.put("/:id", auth, admin, updateEmployee);
+// Add new employee
+router.post(
+  "/",
+  authMiddleware,
+  adminMiddleware,
+  addEmployee
+);
 
-// Activate / Suspend
-router.patch("/:id/status", auth, admin, toggleEmployee);
+// Update employee
+router.put(
+  "/:id",
+  authMiddleware,
+  adminMiddleware,
+  updateEmployee
+);
 
-// Delete Employee
-router.delete("/:id", auth, admin, deleteEmployee);
+// Activate / Suspend employee
+router.patch(
+  "/:id/status",
+  authMiddleware,
+  adminMiddleware,
+  toggleEmployee
+);
+
+// Delete employee
+router.delete(
+  "/:id",
+  authMiddleware,
+  adminMiddleware,
+  deleteEmployee
+);
 
 module.exports = router;

@@ -1,49 +1,46 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
-const normalizeEmail = (value) =>
-  typeof value === "string" ? value.trim().toLowerCase() : "";
+const normalizeEmail = (email) =>
+  typeof email === "string" ? email.trim().toLowerCase() : "";
 
-const isBcryptHash = (value) =>
-  typeof value === "string" && /^\$2[aby]\$/.test(value);
+const isBcryptHash = (password) =>
+  typeof password === "string" && /^\$2[aby]\$/.test(password);
 
-// ===============================
+// =====================================
 // Register Business Owner
-// ===============================
+// =====================================
 exports.register = async (req, res) => {
   try {
-    const {
-      businessName,
-      fullname,
-      email,
-      password,
-    } = req.body;
+    const { businessName, fullname, email, password } = req.body;
 
     if (!businessName || !fullname || !email || !password) {
       return res.status(400).json({
+        success: false,
         message: "All fields are required.",
       });
     }
 
-    // Check Business Name
-    const businessExists = await User.findOne({
+    const existingBusiness = await User.findOne({
       businessName: businessName.trim(),
     });
 
-    if (businessExists) {
+    if (existingBusiness) {
       return res.status(400).json({
+        success: false,
         message: "Business name already exists.",
       });
     }
 
-    // Check Email
-    const emailExists = await User.findOne({
-      email: email.toLowerCase().trim(),
+    const existingEmail = await User.findOne({
+      email: normalizeEmail(email),
     });
 
-    if (emailExists) {
+    if (existingEmail) {
       return res.status(400).json({
+        success: false,
         message: "Email already exists.",
       });
     }
@@ -53,7 +50,7 @@ exports.register = async (req, res) => {
     const admin = await User.create({
       businessName: businessName.trim(),
       fullname: fullname.trim(),
-      email: email.toLowerCase().trim(),
+      email: normalizeEmail(email),
       password: hashedPassword,
       role: "admin",
       createdBy: null,
@@ -61,61 +58,83 @@ exports.register = async (req, res) => {
     });
 
     res.status(201).json({
+      success: true,
       message: "Business account created successfully.",
-      role: admin.role,
+      user: {
+        id: admin._id,
+        fullname: admin.fullname,
+        email: admin.email,
+        role: admin.role,
+      },
     });
-
   } catch (error) {
+    console.error("========== REGISTER ERROR ==========");
     console.error(error);
 
     res.status(500).json({
-      message: "Server Error",
+      success: false,
+      message: error.message,
     });
   }
 };
 
-// ===============================
+// =====================================
 // Login
-// ===============================
+// =====================================
 exports.login = async (req, res) => {
   try {
-    const email = typeof req.body?.email === "string" ? req.body.email : "";
-    const password = typeof req.body?.password === "string" ? req.body.password : "";
+    console.log("========== LOGIN REQUEST ==========");
 
-    if (!email.trim() || !password) {
+    console.log("Mongo Ready State:", mongoose.connection.readyState);
+    console.log("JWT Secret Exists:", !!process.env.JWT_SECRET);
+
+    const email = normalizeEmail(req.body.email);
+    const password = req.body.password;
+
+    if (!email || !password) {
       return res.status(400).json({
+        success: false,
         message: "Email and password are required.",
       });
     }
 
-    const normalizedEmail = normalizeEmail(email);
+    console.log("Searching for:", email);
 
-    const user = await User.findOne({
-      email: normalizedEmail,
-    });
+    const user = await User.findOne({ email });
 
     if (!user) {
+      console.log("User not found");
+
       return res.status(400).json({
+        success: false,
         message: "Invalid email or password.",
       });
     }
 
-    let isValidPassword = false;
+    console.log("User Found:", user.email);
+
+    let passwordValid = false;
 
     if (isBcryptHash(user.password)) {
-      isValidPassword = await bcrypt.compare(password, user.password);
+      passwordValid = await bcrypt.compare(
+        password,
+        user.password
+      );
     } else {
-      isValidPassword = user.password === password;
+      passwordValid = password === user.password;
+
+      if (passwordValid) {
+        user.password = await bcrypt.hash(password, 10);
+      }
     }
 
-    if (!isValidPassword) {
+    console.log("Password Match:", passwordValid);
+
+    if (!passwordValid) {
       return res.status(400).json({
+        success: false,
         message: "Invalid email or password.",
       });
-    }
-
-    if (!isBcryptHash(user.password) && typeof user.password === "string") {
-      user.password = await bcrypt.hash(password, 10);
     }
 
     user.lastLogin = new Date();
@@ -132,7 +151,10 @@ exports.login = async (req, res) => {
       }
     );
 
-    res.status(200).json({
+    console.log("Login Successful");
+
+    return res.status(200).json({
+      success: true,
       message: "Login successful.",
       token,
       user: {
@@ -145,11 +167,14 @@ exports.login = async (req, res) => {
         mustChangePassword: user.mustChangePassword,
       },
     });
+
   } catch (error) {
+    console.error("========== LOGIN ERROR ==========");
     console.error(error);
 
-    res.status(500).json({
-      message: "Server Error",
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

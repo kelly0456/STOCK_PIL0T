@@ -1,9 +1,9 @@
 const Sale = require("../models/Sale");
 const Product = require("../models/product");
 
-// ===============================
+// =======================================
 // Dashboard Report
-// ===============================
+// =======================================
 exports.getDashboardReport = async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
@@ -12,17 +12,17 @@ exports.getDashboardReport = async (req, res) => {
     const totalProducts = products.length;
 
     const totalStock = products.reduce(
-      (sum, product) => sum + product.stock,
+      (sum, product) => sum + (product.stock || 0),
       0
     );
 
     const totalSold = products.reduce(
-      (sum, product) => sum + product.sold,
+      (sum, product) => sum + (product.sold || 0),
       0
     );
 
     const totalRevenue = sales.reduce(
-      (sum, sale) => sum + sale.total,
+      (sum, sale) => sum + (sale.total || 0),
       0
     );
 
@@ -35,10 +35,11 @@ exports.getDashboardReport = async (req, res) => {
     );
 
     const topSelling = [...products]
-      .sort((a, b) => b.sold - a.sold)
+      .sort((a, b) => (b.sold || 0) - (a.sold || 0))
       .slice(0, 5);
 
-    res.json({
+    return res.status(200).json({
+      success: true,
       totalProducts,
       totalStock,
       totalSold,
@@ -50,15 +51,19 @@ exports.getDashboardReport = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({
+    console.error("========== DASHBOARD REPORT ERROR ==========");
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// ===============================
+// =======================================
 // Monthly Report
-// ===============================
+// =======================================
 exports.getMonthlyReport = async (req, res) => {
   try {
     const report = await Sale.aggregate([
@@ -68,11 +73,11 @@ exports.getMonthlyReport = async (req, res) => {
             year: { $year: "$createdAt" },
             month: { $month: "$createdAt" },
           },
-          totalIncome: {
-            $sum: "$total",
-          },
           totalSales: {
             $sum: 1,
+          },
+          totalIncome: {
+            $sum: "$total",
           },
         },
       },
@@ -84,18 +89,22 @@ exports.getMonthlyReport = async (req, res) => {
       },
     ]);
 
-    res.json(report);
+    return res.status(200).json(report);
 
   } catch (error) {
-    res.status(500).json({
+    console.error("========== MONTHLY REPORT ERROR ==========");
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-// ===============================
+// =======================================
 // Yearly Report
-// ===============================
+// =======================================
 exports.getYearlyReport = async (req, res) => {
   try {
     const report = await Sale.aggregate([
@@ -104,11 +113,11 @@ exports.getYearlyReport = async (req, res) => {
           _id: {
             year: { $year: "$createdAt" },
           },
-          totalIncome: {
-            $sum: "$total",
-          },
           totalSales: {
             $sum: 1,
+          },
+          totalIncome: {
+            $sum: "$total",
           },
         },
       },
@@ -119,10 +128,14 @@ exports.getYearlyReport = async (req, res) => {
       },
     ]);
 
-    res.json(report);
+    return res.status(200).json(report);
 
   } catch (error) {
-    res.status(500).json({
+    console.error("========== YEARLY REPORT ERROR ==========");
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }

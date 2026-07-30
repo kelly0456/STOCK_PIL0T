@@ -8,13 +8,21 @@ exports.getEmployees = async (req, res) => {
   try {
     const employees = await User.find({
       createdBy: req.user.id,
-    }).select("-password");
+      role: "staff",
+    })
+      .select("-password")
+      .lean();
 
-    res.json(employees);
-
+    return res.status(200).json({
+      success: true,
+      employees,
+    });
   } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
+    console.error("GET EMPLOYEES ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch employees.",
     });
   }
 };
@@ -32,41 +40,68 @@ exports.addEmployee = async (req, res) => {
       password,
     } = req.body;
 
-    const exists = await User.findOne({ email });
-
-    if (exists) {
+    if (!fullname || !email || !password) {
       return res.status(400).json({
-        message: "Employee already exists.",
+        success: false,
+        message: "Full name, email and password are required.",
+      });
+    }
+
+    const admin = await User.findById(req.user.id);
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin account not found.",
+      });
+    }
+
+    const existingEmployee = await User.findOne({
+      email: email.trim().toLowerCase(),
+    });
+
+    if (existingEmployee) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already exists.",
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const admin = await User.findById(req.user.id);
-
     const employee = await User.create({
       businessName: admin.businessName,
-      fullname,
-      email,
-      phone,
-      position,
+      fullname: fullname.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone?.trim() || "",
+      position: position?.trim() || "",
       password: hashedPassword,
       role: "staff",
       active: true,
       mustChangePassword: true,
-      createdBy: req.user.id,
+      createdBy: admin._id,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
+      success: true,
       message: "Employee created successfully.",
-      employee,
+      employee: {
+        id: employee._id,
+        fullname: employee.fullname,
+        email: employee.email,
+        phone: employee.phone,
+        position: employee.position,
+        role: employee.role,
+        active: employee.active,
+      },
     });
 
   } catch (error) {
-    console.log(error);
+    console.error("ADD EMPLOYEE ERROR:", error);
 
-    res.status(500).json({
-      message: "Server Error",
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -76,28 +111,51 @@ exports.addEmployee = async (req, res) => {
 // =======================================
 exports.updateEmployee = async (req, res) => {
   try {
-    const employee = await User.findById(req.params.id);
+    const employee = await User.findOne({
+      _id: req.params.id,
+      createdBy: req.user.id,
+      role: "staff",
+    });
 
     if (!employee) {
       return res.status(404).json({
+        success: false,
         message: "Employee not found.",
       });
     }
 
-    employee.fullname = req.body.fullname || employee.fullname;
-    employee.email = req.body.email || employee.email;
-    employee.phone = req.body.phone || employee.phone;
-    employee.position = req.body.position || employee.position;
+    if (req.body.email) {
+      const existing = await User.findOne({
+        email: req.body.email.trim().toLowerCase(),
+        _id: { $ne: employee._id },
+      });
+
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists.",
+        });
+      }
+    }
+
+    employee.fullname = req.body.fullname?.trim() || employee.fullname;
+    employee.email = req.body.email?.trim().toLowerCase() || employee.email;
+    employee.phone = req.body.phone?.trim() || employee.phone;
+    employee.position = req.body.position?.trim() || employee.position;
 
     await employee.save();
 
-    res.json({
-      message: "Employee updated.",
+    return res.status(200).json({
+      success: true,
+      message: "Employee updated successfully.",
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
+    console.error("UPDATE EMPLOYEE ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -107,10 +165,15 @@ exports.updateEmployee = async (req, res) => {
 // =======================================
 exports.toggleEmployee = async (req, res) => {
   try {
-    const employee = await User.findById(req.params.id);
+    const employee = await User.findOne({
+      _id: req.params.id,
+      createdBy: req.user.id,
+      role: "staff",
+    });
 
     if (!employee) {
       return res.status(404).json({
+        success: false,
         message: "Employee not found.",
       });
     }
@@ -119,15 +182,20 @@ exports.toggleEmployee = async (req, res) => {
 
     await employee.save();
 
-    res.json({
+    return res.status(200).json({
+      success: true,
       message: employee.active
-        ? "Employee activated."
-        : "Employee suspended.",
+        ? "Employee activated successfully."
+        : "Employee suspended successfully.",
+      active: employee.active,
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
+    console.error("TOGGLE EMPLOYEE ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -137,15 +205,32 @@ exports.toggleEmployee = async (req, res) => {
 // =======================================
 exports.deleteEmployee = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const employee = await User.findOne({
+      _id: req.params.id,
+      createdBy: req.user.id,
+      role: "staff",
+    });
 
-    res.json({
-      message: "Employee deleted.",
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found.",
+      });
+    }
+
+    await employee.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "Employee deleted successfully.",
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
+    console.error("DELETE EMPLOYEE ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
