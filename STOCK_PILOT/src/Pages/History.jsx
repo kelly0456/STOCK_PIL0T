@@ -21,15 +21,15 @@ export default function History() {
                 Authorization: `Bearer ${token}`,
             };
 
-            const month = await axios.get(
-                `${API_URL}/reports/monthly`,
-                { headers }
-            );
+         const month = await axios.get(
+    `${API_URL}/api/reports/monthly`,
+    { headers }
+);
 
-            const year = await axios.get(
-                `${API_URL}/reports/yearly`,
-                { headers }
-            );
+const year = await axios.get(
+    `${API_URL}/api/reports/yearly`,
+    { headers }
+);
 
             setMonthly(month.data);
             setYearly(year.data);
