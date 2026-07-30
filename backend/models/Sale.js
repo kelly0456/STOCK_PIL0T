@@ -67,6 +67,17 @@ const saleSchema = new mongoose.Schema(
       default: "Cash",
     },
 
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "paid",
+    },
+
+    checkoutRequestId: {
+      type: String,
+      default: "",
+    },
+
     amountReceived: {
       type: Number,
       default: 0,

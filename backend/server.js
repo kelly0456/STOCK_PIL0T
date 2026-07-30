@@ -9,6 +9,7 @@ const userRoutes = require("./routes/userRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const productRoutes = require("./routes/productRoutes");
 const salesRoutes = require("./routes/salesRoutes");
+const mpesaRoutes = require("./routes/mpesaRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 
 const app = express();
@@ -58,6 +59,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/sales", salesRoutes);
+app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/reports", reportRoutes);
 
 // =====================================

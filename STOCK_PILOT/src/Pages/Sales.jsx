@@ -394,6 +394,24 @@ export default function Sales() {
       setProcessingSale(true);
 
       const token = localStorage.getItem("token");
+      const invoiceNumber = `INV-${Date.now()}`;
+
+      if (paymentMethod === "M-Pesa") {
+        await axios.post(
+          `${API_URL}/api/mpesa/stk`,
+          {
+            phone: phoneNumber,
+            amount: total,
+            accountReference: invoiceNumber,
+            transactionDesc: "StockPilot sale payment",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
 
       // ===============================
       // SEND SALE TO SERVER
@@ -424,11 +442,7 @@ export default function Sales() {
 
           totalAmount: total,
 
-        },
-
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+          invoiceNumber,
           },
         }
 

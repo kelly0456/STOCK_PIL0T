@@ -147,7 +147,8 @@ exports.createSale = async (req, res) => {
     // ===================================
     // Generate Invoice
     // ===================================
-    const invoiceNumber = `INV-${Date.now()}`;
+    const invoiceNumber =
+      req.body.invoiceNumber || `INV-${Date.now()}`;
 
     // ===================================
     // Create Sale
@@ -158,6 +159,8 @@ exports.createSale = async (req, res) => {
       total: finalTotal,
       discount: Number(discount),
       paymentMethod: paymentMethod || "Cash",
+      paymentStatus:
+        paymentMethod === "M-Pesa" ? "pending" : "paid",
       amountReceived: Number(amountReceived),
       phone,
       bankName,
