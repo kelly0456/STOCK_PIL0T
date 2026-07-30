@@ -65,21 +65,25 @@ exports.login = async (req, res) => {
 
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+  const user = await User.findOne({
+  email: email.toLowerCase().trim(),
+});
 
-    if (!user) {
-      return res.status(400).json({
-        message: "Invalid email or password.",
-      });
-    }
+console.log("========== LOGIN DEBUG ==========");
+console.log("Email entered:", email);
+console.log("User found:", user);
 
-    if (!user.active) {
-      return res.status(403).json({
-        message: "This account has been deactivated.",
-      });
-    }
+if (!user) {
+  return res.status(400).json({
+    message: "Invalid email or password.",
+  });
+}
 
-    const match = await bcrypt.compare(password, user.password);
+const match = await bcrypt.compare(password, user.password);
+
+console.log("Password entered:", password);
+console.log("Hash in DB:", user.password);
+console.log("Password Match:", match);
 
     if (!match) {
       return res.status(400).json({
