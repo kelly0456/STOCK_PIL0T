@@ -4,11 +4,7 @@ import axios from "axios";
 export default function Sales() {
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // =====================================================
-  // STEP 1
-  // PRODUCT STATE
-  // =====================================================
-
+  
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
 
@@ -19,15 +15,12 @@ export default function Sales() {
 
   const [cart, setCart] = useState([]);
 
-  // =====================================================
-  // STEP 1
-  // CUSTOMER DETAILS
-  // =====================================================
+
 
   const [paymentMethod, setPaymentMethod] = useState("Cash");
-  const [discount, setDiscount] = useState(0);
-  const [amountReceived, setAmountReceived] = useState("");
-
+const [phoneNumber, setPhoneNumber] = useState("");
+const [discount, setDiscount] = useState(0);
+const [amountReceived, setAmountReceived] = useState("");
   // =====================================================
   // STEP 1
   // DASHBOARD STATISTICS
@@ -180,64 +173,69 @@ export default function Sales() {
   // =====================================================
 
   const completeSale = async () => {
-    if (cart.length === 0) {
-      alert("Cart is empty.");
-      return;
-    }
+  if (cart.length === 0) {
+    alert("Cart is empty.");
+    return;
+  }
 
-    if (Number(amountReceived) < total) {
-      alert("Amount received is less than the total.");
-      return;
-    }
+  if (Number(amountReceived) < total) {
+    alert("Amount received is less than the total.");
+    return;
+  }
 
-    try {
-      const token = localStorage.getItem("token");
-      await axios.post(
-        `${API_URL}/api/sales`,
-        {
-          items: cart.map(item => ({
-            productId: item._id,
-            quantity: item.qty,
-          })),
-          paymentMethod,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  try {
+    const token = localStorage.getItem("token");
 
-      for (const item of cart) {
-        await axios.put(
-          `${API_URL}/api/products/${item._id}`,
-          {
-            stock: item.stock - item.qty,
-            sold: item.sold + item.qty
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-      }
+  const response = await axios.post(
+  `${API_URL}/api/sales`,
+  {
+    items: cart.map((item) => ({
+      productId: item._id,
+      quantity: item.qty,
+    })),
+    paymentMethod,
+    phone: phoneNumber,
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
-      setCompletedTransactions(prev => prev + 1);
-      setTotalSalesRevenue(prev => prev + total);
-      setTotalItemsSold(prev => prev + totalCartItems);
+    if (response.data.success) {
+      setCompletedTransactions((prev) => prev + 1);
+      setTotalSalesRevenue((prev) => prev + total);
+      setTotalItemsSold((prev) => prev + totalCartItems);
+
+      // Clear cart
       setCart([]);
+
+      // Reset checkout
       setPaymentMethod("Cash");
       setDiscount(0);
       setAmountReceived("");
-      fetchProducts();
 
-      alert("Sale Completed Successfully!");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to complete sale.");
+      // Refresh products from the server
+      await fetchProducts();
+
+      alert(response.data.message || "Sale Completed Successfully!");
     }
-  };
+  } catch (error) {
+    console.error("Sale Error:", error);
+
+    alert(
+      error.response?.data?.message ||
+      "Failed to complete sale."
+    );
+  }
+};
+
+
+
+
+
+
 
   return (
     <div className="container-fluid py-4">
@@ -497,6 +495,22 @@ export default function Sales() {
                     <option>Card</option>
                   </select>
                 </div>
+
+                {paymentMethod === "M-Pesa" && (
+  <div className="col-md-12 mt-3">
+    <label className="form-label">
+      M-Pesa Phone Number
+    </label>
+
+    <input
+      type="tel"
+      className="form-control"
+      placeholder="254712345678"
+      value={phoneNumber}
+      onChange={(e) => setPhoneNumber(e.target.value)}
+    />
+  </div>
+)}
 
                 {/* Discount */}
                 <div className="col-md-4 mb-3">
