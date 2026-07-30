@@ -23,8 +23,12 @@ exports.register = async (req, res) => {
       });
     }
 
+    const normalizedBusinessName = businessName.trim().toLowerCase();
+    const normalizedFullname = fullname.trim();
+    const normalizedEmail = normalizeEmail(email);
+
     const existingBusiness = await User.findOne({
-      businessName: businessName.trim(),
+      businessName: normalizedBusinessName,
     });
 
     if (existingBusiness) {
@@ -35,7 +39,7 @@ exports.register = async (req, res) => {
     }
 
     const existingEmail = await User.findOne({
-      email: normalizeEmail(email),
+      email: normalizedEmail,
     });
 
     if (existingEmail) {
@@ -48,9 +52,9 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const admin = await User.create({
-      businessName: businessName.trim(),
-      fullname: fullname.trim(),
-      email: normalizeEmail(email),
+      businessName: normalizedBusinessName,
+      fullname: normalizedFullname,
+      email: normalizedEmail,
       password: hashedPassword,
       role: "admin",
       createdBy: null,
@@ -70,6 +74,20 @@ exports.register = async (req, res) => {
   } catch (error) {
     console.error("========== REGISTER ERROR ==========");
     console.error(error);
+
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyValue)[0];
+      const message = duplicateField === "businessName"
+        ? "Business name already exists."
+        : duplicateField === "email"
+        ? "Email already exists."
+        : "Duplicate value error.";
+
+      return res.status(400).json({
+        success: false,
+        message,
+      });
+    }
 
     res.status(500).json({
       success: false,
