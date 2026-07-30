@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const authMiddleware = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 
 const {
@@ -10,7 +10,7 @@ const {
   updateEmployee,
   toggleEmployee,
   deleteEmployee,
-} = require("../controller/employeeController");
+} = require("../controller/EmployeeController");
 
 // ===============================
 // Employee Routes
@@ -19,7 +19,7 @@ const {
 // Get all employees
 router.get(
   "/",
-  authMiddleware,
+  protect,
   adminMiddleware,
   getEmployees
 );
@@ -27,7 +27,7 @@ router.get(
 // Add new employee
 router.post(
   "/",
-  authMiddleware,
+  protect,
   adminMiddleware,
   addEmployee
 );
@@ -35,7 +35,7 @@ router.post(
 // Update employee
 router.put(
   "/:id",
-  authMiddleware,
+  protect,
   adminMiddleware,
   updateEmployee
 );
@@ -43,7 +43,7 @@ router.put(
 // Activate / Suspend employee
 router.patch(
   "/:id/status",
-  authMiddleware,
+  protect,
   adminMiddleware,
   toggleEmployee
 );
@@ -51,7 +51,7 @@ router.patch(
 // Delete employee
 router.delete(
   "/:id",
-  authMiddleware,
+  protect,
   adminMiddleware,
   deleteEmployee
 );
