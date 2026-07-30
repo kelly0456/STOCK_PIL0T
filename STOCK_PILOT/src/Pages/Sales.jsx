@@ -5,6 +5,7 @@ export default function Sales() {
   const API_URL = import.meta.env.VITE_API_URL;
 
   // =====================================================
+  // STEP 1
   // PRODUCT STATE
   // =====================================================
 
@@ -12,13 +13,15 @@ export default function Sales() {
   const [search, setSearch] = useState("");
 
   // =====================================================
+  // STEP 1
   // CART STATE
   // =====================================================
 
   const [cart, setCart] = useState([]);
 
   // =====================================================
-  // CUSTOMER & PAYMENT DETAILS
+  // STEP 1
+  // CUSTOMER DETAILS
   // =====================================================
 
   const [paymentMethod, setPaymentMethod] = useState("Cash");
@@ -26,6 +29,7 @@ export default function Sales() {
   const [amountReceived, setAmountReceived] = useState("");
 
   // =====================================================
+  // STEP 1
   // DASHBOARD STATISTICS
   // =====================================================
 
@@ -33,8 +37,6 @@ export default function Sales() {
   const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
   const [totalItemsSold, setTotalItemsSold] = useState(0);
 
-  // =====================================================
-  // CALCULATIONS & FORMATTING
   // =====================================================
 
   const totalCartItems = cart.reduce(
@@ -59,8 +61,6 @@ export default function Sales() {
     }).format(amount);
   };
 
-  // =====================================================
-  // FETCH PRODUCTS
   // =====================================================
 
   const [loading, setLoading] = useState(true);
@@ -135,6 +135,7 @@ export default function Sales() {
   };
 
   // =====================================================
+  // STEP 5
   // CART FUNCTIONS
   // =====================================================
 
@@ -191,13 +192,12 @@ export default function Sales() {
 
     try {
       const token = localStorage.getItem("token");
-
       await axios.post(
         `${API_URL}/api/sales`,
         {
           items: cart.map(item => ({
             productId: item._id,
-            qty: item.qty,
+            quantity: item.qty,
           })),
           paymentMethod,
         },
@@ -208,6 +208,21 @@ export default function Sales() {
         }
       );
 
+      for (const item of cart) {
+        await axios.put(
+          `${API_URL}/api/products/${item._id}`,
+          {
+            stock: item.stock - item.qty,
+            sold: item.sold + item.qty
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+      }
+
       setCompletedTransactions(prev => prev + 1);
       setTotalSalesRevenue(prev => prev + total);
       setTotalItemsSold(prev => prev + totalCartItems);
@@ -215,13 +230,12 @@ export default function Sales() {
       setPaymentMethod("Cash");
       setDiscount(0);
       setAmountReceived("");
-      
       fetchProducts();
 
       alert("Sale Completed Successfully!");
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Failed to complete sale.");
+      alert("Failed to complete sale.");
     }
   };
 
@@ -240,6 +254,7 @@ export default function Sales() {
       </div>
 
       {/* ===============================
+          STEP 2
           DASHBOARD
       ================================ */}
       <div className="row g-4 mb-4">

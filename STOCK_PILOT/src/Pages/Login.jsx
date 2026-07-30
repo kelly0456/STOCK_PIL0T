@@ -18,8 +18,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Backend API URL from .env
-  const API_URL = import.meta.env.VITE_API_URL;
+  // Backend API URL from env, with a local fallback for development
+  const API_URL =
+    import.meta.env.VITE_API_URL ||
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://localhost:5000"
+      : "https://stock-pil0t-1.onrender.com");
 
   const handleChange = (e) => {
     setFormData({
@@ -36,10 +40,15 @@ export default function Login() {
     try {
       setLoading(true);
 
-    const res = await axios.post(
-  `${API_URL}/api/auth/login`,
-  formData
-);
+      const payload = {
+        email: formData.email.trim(),
+        password: formData.password,
+      };
+
+      const res = await axios.post(
+        `${API_URL}/api/auth/login`,
+        payload
+      );
 
       // Save login information
       localStorage.setItem("token", res.data.token);

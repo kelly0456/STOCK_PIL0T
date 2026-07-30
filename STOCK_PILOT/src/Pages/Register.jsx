@@ -6,7 +6,11 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 export default function Register() {
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL =
+    import.meta.env.VITE_API_URL ||
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://localhost:5000"
+      : "https://stock-pil0t-1.onrender.com");
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -43,9 +47,9 @@ export default function Register() {
       setLoading(true);
 
       const res = await axios.post(`${API_URL}/api/auth/register`, {
-        businessName: formData.businessName,
-        fullname: formData.fullname,
-        email: formData.email,
+        businessName: formData.businessName.trim(),
+        fullname: formData.fullname.trim(),
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
       });
 
