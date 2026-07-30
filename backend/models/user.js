@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema(
     businessName: {
       type: String,
       required: true,
+      unique: true,
       trim: true,
     },
 
@@ -53,6 +54,11 @@ const userSchema = new mongoose.Schema(
     mustChangePassword: {
       type: Boolean,
       default: false,
+    },
+
+    lastLogin: {
+      type: Date,
+      default: null,
     },
 
     createdBy: {

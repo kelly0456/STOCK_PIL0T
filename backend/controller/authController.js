@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 // ===============================
-// Register Business Owner (Admin)
+// Register Business Owner
 // ===============================
 exports.register = async (req, res) => {
   try {
@@ -14,16 +14,27 @@ exports.register = async (req, res) => {
       password,
     } = req.body;
 
-    // Only allow one public registration
-    const adminExists = await User.findOne({ role: "admin" });
-
-    if (adminExists) {
-      return res.status(403).json({
-        message: "Business account already exists. Please login.",
+    if (!businessName || !fullname || !email || !password) {
+      return res.status(400).json({
+        message: "All fields are required.",
       });
     }
 
-    const emailExists = await User.findOne({ email });
+    // Check Business Name
+    const businessExists = await User.findOne({
+      businessName: businessName.trim(),
+    });
+
+    if (businessExists) {
+      return res.status(400).json({
+        message: "Business name already exists.",
+      });
+    }
+
+    // Check Email
+    const emailExists = await User.findOne({
+      email: email.toLowerCase().trim(),
+    });
 
     if (emailExists) {
       return res.status(400).json({
@@ -34,9 +45,9 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const admin = await User.create({
-      businessName,
-      fullname,
-      email,
+      businessName: businessName.trim(),
+      fullname: fullname.trim(),
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
       role: "admin",
       createdBy: null,
@@ -49,7 +60,7 @@ exports.register = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     res.status(500).json({
       message: "Server Error",
@@ -65,25 +76,26 @@ exports.login = async (req, res) => {
 
     const { email, password } = req.body;
 
-  const user = await User.findOne({
-  email: email.toLowerCase().trim(),
-});
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required.",
+      });
+    }
 
-console.log("========== LOGIN DEBUG ==========");
-console.log("Email entered:", email);
-console.log("User found:", user);
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+    });
 
-if (!user) {
-  return res.status(400).json({
-    message: "Invalid email or password.",
-  });
-}
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid email or password.",
+      });
+    }
 
-const match = await bcrypt.compare(password, user.password);
-
-console.log("Password entered:", password);
-console.log("Hash in DB:", user.password);
-console.log("Password Match:", match);
+    const match = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!match) {
       return res.status(400).json({
@@ -105,7 +117,7 @@ console.log("Password Match:", match);
       }
     );
 
-    res.json({
+    res.status(200).json({
       message: "Login successful.",
       token,
       user: {
@@ -120,7 +132,7 @@ console.log("Password Match:", match);
     });
 
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     res.status(500).json({
       message: "Server Error",
