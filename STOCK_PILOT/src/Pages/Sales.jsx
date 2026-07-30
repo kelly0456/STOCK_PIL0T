@@ -2,47 +2,130 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function Sales() {
+
+  // =====================================================
+  // API URL
+  // Reads the backend URL from the Vite environment file
+  // Example:
+  // VITE_API_URL=https://stock-pil0t-1.onrender.com
+  // =====================================================
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Product & Search state
+  // =====================================================
+  // PRODUCTS SECTION
+  // =====================================================
+
+  // Stores all products retrieved from the database
   const [products, setProducts] = useState([]);
+
+  // Stores the search keyword entered by the cashier
   const [search, setSearch] = useState("");
+
+  // Controls the loading spinner while products load
   const [loading, setLoading] = useState(true);
 
-  // Cart state
+  // =====================================================
+  // SHOPPING CART
+  // =====================================================
+
+  // Stores all products added to the cart
   const [cart, setCart] = useState([]);
 
-  // Checkout state
+  // =====================================================
+  // CHECKOUT INFORMATION
+  // =====================================================
+
+  // Selected payment method
+  // Cash | M-Pesa | Bank
   const [paymentMethod, setPaymentMethod] = useState("Cash");
+
+  // Customer phone number (used for M-Pesa)
   const [phoneNumber, setPhoneNumber] = useState("");
+
+  // Discount applied to the sale
   const [discount, setDiscount] = useState(0);
+
+  // Cash received from customer
   const [amountReceived, setAmountReceived] = useState("");
+
+  // Bank Transfer Details
   const [bankName, setBankName] = useState("");
   const [bankReference, setBankReference] = useState("");
 
-  // POS Analytics State
+  // =====================================================
+  // POS DASHBOARD STATISTICS
+  // =====================================================
+
+  // Number of completed sales
   const [completedTransactions, setCompletedTransactions] = useState(0);
+
+  // Total revenue earned
   const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
+
+  // Total quantity of products sold
   const [totalItemsSold, setTotalItemsSold] = useState(0);
+
+  // =====================================================
+  // PROMPT / NOTIFICATION SYSTEM
+  // (We will use this instead of alert() later)
+  // =====================================================
+
+  const [prompt, setPrompt] = useState({
+    show: false,
+    type: "",      // success | error | warning | info
+    title: "",
+    message: "",
+  });
+
+  // =====================================================
+  // SALE PROCESSING
+  // Used to disable the Complete Sale button
+  // while the sale is being processed.
+  // =====================================================
+
+  const [processingSale, setProcessingSale] = useState(false);
 
   // =====================================================
   // CALCULATED VALUES
   // =====================================================
 
-  const totalCartItems = cart.reduce((total, item) => total + item.qty, 0);
+  // Total number of items currently in the cart
+  const totalCartItems = cart.reduce(
+    (total, item) => total + item.qty,
+    0
+  );
 
+  // Cart subtotal before discount
   const subtotal = cart.reduce(
     (total, item) => total + item.price * item.qty,
     0
   );
 
-  const parsedDiscount = Math.max(0, Number(discount) || 0);
-  const total = Math.max(0, subtotal - parsedDiscount);
+  // Ensure discount is never negative
+  const parsedDiscount = Math.max(
+    0,
+    Number(discount) || 0
+  );
 
-  const parsedAmountReceived = Number(amountReceived) || 0;
-  const change = parsedAmountReceived - total;
+  // Final amount after discount
+  const total = Math.max(
+    0,
+    subtotal - parsedDiscount
+  );
 
-  // Currency Formatter
+  // Cash received
+  const parsedAmountReceived =
+    Number(amountReceived) || 0;
+
+  // Customer change
+  const change =
+    parsedAmountReceived - total;
+
+  // =====================================================
+  // FORMAT CURRENCY
+  // Converts numbers into Kenyan Shillings
+  // =====================================================
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-KE", {
       style: "currency",
@@ -51,7 +134,7 @@ export default function Sales() {
   };
 
   // =====================================================
-  // FETCH PRODUCTS
+  // FETCH PRODUCTS FROM BACKEND
   // =====================================================
 
   useEffect(() => {
@@ -83,24 +166,45 @@ export default function Sales() {
   );
 
   // =====================================================
-  // CART ACTIONS
+  // ADD PRODUCT TO CART
   // =====================================================
 
   const addToCart = (product) => {
-    const existingProduct = cart.find((item) => item._id === product._id);
 
+    // Check if the product already exists in the cart
+    const existingProduct = cart.find(
+      (item) => item._id === product._id
+    );
+
+    // If product is already in the cart
     if (existingProduct) {
+
       setCart(
-        cart.map((item) =>
-          item._id === product._id
-            ? {
+        cart.map((item) => {
+
+          // Increase quantity only if stock is available
+          if (item._id === product._id) {
+
+            if (item.qty < product.stock) {
+              return {
                 ...item,
-                qty: item.qty < product.stock ? item.qty + 1 : item.qty,
-              }
-            : item
-        )
+                qty: item.qty + 1,
+              };
+            }
+
+            // Stock limit reached
+            alert("Maximum available stock reached.");
+
+            return item;
+          }
+
+          return item;
+        })
       );
+
     } else {
+
+      // Add new product to cart
       setCart([
         ...cart,
         {
@@ -108,447 +212,516 @@ export default function Sales() {
           qty: 1,
         },
       ]);
+
     }
   };
 
+  // =====================================================
+  // INCREASE PRODUCT QUANTITY
+  // =====================================================
+
   const increaseQty = (_id) => {
+
     setCart(
       cart.map((item) => {
-        if (item._id === _id && item.qty < item.stock) {
-          return { ...item, qty: item.qty + 1 };
+
+        if (item._id === _id) {
+
+          // Prevent selling more than available stock
+          if (item.qty >= item.stock) {
+
+            alert("No more stock available.");
+
+            return item;
+          }
+
+          return {
+            ...item,
+            qty: item.qty + 1,
+          };
         }
+
         return item;
+
       })
     );
+
   };
+
+  // =====================================================
+  // DECREASE PRODUCT QUANTITY
+  // =====================================================
 
   const decreaseQty = (_id) => {
+
     setCart(
+
       cart
         .map((item) => {
+
           if (item._id === _id) {
-            return { ...item, qty: item.qty - 1 };
+
+            return {
+              ...item,
+              qty: item.qty - 1,
+            };
+
           }
+
           return item;
+
         })
+
+        // Automatically remove item when quantity becomes zero
         .filter((item) => item.qty > 0)
+
     );
+
   };
+
+  // =====================================================
+  // REMOVE PRODUCT FROM CART
+  // =====================================================
 
   const removeItem = (_id) => {
-    setCart(cart.filter((item) => item._id !== _id));
+
+    // Remove selected item completely
+    setCart(
+      cart.filter((item) => item._id !== _id)
+    );
+
   };
 
-  // Helper to clear checkout form state
+  // =====================================================
+  // RESET CHECKOUT FORM
+  // Called after a successful sale
+  // =====================================================
+
   const resetFormState = () => {
+
+    // Empty shopping cart
     setCart([]);
+
+    // Reset payment method
     setPaymentMethod("Cash");
+
+    // Reset discount
     setDiscount(0);
+
+    // Reset cash received
     setAmountReceived("");
+
+    // Reset M-Pesa phone number
     setPhoneNumber("");
+
+    // Reset bank details
     setBankName("");
     setBankReference("");
+
   };
 
   // =====================================================
   // COMPLETE SALE
+  // Handles:
+  // 1. Validation
+  // 2. API Request
+  // 3. Dashboard Update
+  // 4. Reset Form
   // =====================================================
 
   const completeSale = async () => {
+
+    // Prevent multiple clicks
+    if (processingSale) return;
+
+    // ===============================
+    // CART VALIDATION
+    // ===============================
+
     if (cart.length === 0) {
       alert("Cart is empty.");
       return;
     }
 
-    // Payment validation checks
-    if (paymentMethod === "Cash" && parsedAmountReceived < total) {
-      alert("Amount received is less than the total balance.");
+    // ===============================
+    // CASH VALIDATION
+    // ===============================
+
+    if (
+      paymentMethod === "Cash" &&
+      parsedAmountReceived < total
+    ) {
+      alert("Amount received is less than the total amount.");
       return;
     }
 
-    if (paymentMethod === "M-Pesa" && !phoneNumber.trim()) {
-      alert("Please provide an M-Pesa phone number.");
+    // ===============================
+    // MPESA VALIDATION
+    // ===============================
+
+    if (
+      paymentMethod === "M-Pesa" &&
+      !phoneNumber.trim()
+    ) {
+      alert("Please enter the customer's M-Pesa phone number.");
       return;
     }
 
-    if (paymentMethod === "Bank" && (!bankName.trim() || !bankReference.trim())) {
-      alert("Please enter both the bank name and transaction reference.");
+    // ===============================
+    // BANK VALIDATION
+    // ===============================
+
+    if (
+      paymentMethod === "Bank" &&
+      (
+        !bankName.trim() ||
+        !bankReference.trim()
+      )
+    ) {
+      alert("Please enter the bank details.");
       return;
     }
 
     try {
+
+      // Show loading state
+      setProcessingSale(true);
+
       const token = localStorage.getItem("token");
 
+      // ===============================
+      // SEND SALE TO SERVER
+      // ===============================
+
       const response = await axios.post(
+
         `${API_URL}/api/sales`,
+
         {
+
           items: cart.map((item) => ({
             productId: item._id,
             quantity: item.qty,
           })),
+
           paymentMethod,
+
           phone: phoneNumber,
+
           bankName,
+
           bankReference,
+
           amountReceived: parsedAmountReceived,
+
           discount: parsedDiscount,
+
           totalAmount: total,
+
         },
+
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
+
       );
+
+      // ===============================
+      // SUCCESS
+      // ===============================
 
       if (response.data.success) {
-        setCompletedTransactions((prev) => prev + 1);
-        setTotalSalesRevenue((prev) => prev + total);
-        setTotalItemsSold((prev) => prev + totalCartItems);
+
+        // Update Dashboard Cards
+
+        setCompletedTransactions(
+          (prev) => prev + 1
+        );
+
+        setTotalSalesRevenue(
+          (prev) => prev + total
+        );
+
+        setTotalItemsSold(
+          (prev) => prev + totalCartItems
+        );
+
+        // Reset Checkout
 
         resetFormState();
+
+        // Refresh Product Stock
+
         await fetchProducts();
 
-        alert(response.data.message || "Sale Completed Successfully!");
+        alert(
+          response.data.message ||
+          "Sale completed successfully."
+        );
+
       }
+
     } catch (error) {
+
       console.error("Sale Error:", error);
+
       alert(
-        error.response?.data?.message || "Failed to complete sale."
+        error.response?.data?.message ||
+        "Unable to complete the sale."
       );
+
+    } finally {
+
+      // Remove loading state
+      setProcessingSale(false);
+
     }
+
   };
 
   return (
     <div className="container-fluid py-4">
-      {/* Header */}
-      <div className="mb-4">
-        <h2 className="fw-bold">Sales Point Of Sale (POS)</h2>
-        <p className="text-muted">
-          Process customer purchases quickly and efficiently.
-        </p>
-      </div>
-
-      {/* Dashboard Metrics */}
-      <div className="row g-4 mb-4">
-        <div className="col-md-3">
-          <div className="card shadow border-0 rounded-4">
-            <div className="card-body">
-              <small className="text-muted">Today's Sales</small>
-              <h3 className="fw-bold text-success mt-2">
-                {formatCurrency(totalSalesRevenue)}
-              </h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="card shadow border-0 rounded-4">
-            <div className="card-body">
-              <small className="text-muted">Transactions</small>
-              <h3 className="fw-bold text-primary mt-2">
-                {completedTransactions}
-              </h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="card shadow border-0 rounded-4">
-            <div className="card-body">
-              <small className="text-muted">Items Sold</small>
-              <h3 className="fw-bold text-warning mt-2">{totalItemsSold}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-3">
-          <div className="card shadow border-0 rounded-4">
-            <div className="card-body">
-              <small className="text-muted">Cart Items</small>
-              <h3 className="fw-bold text-danger mt-2">{totalCartItems}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Products Catalog & Shopping Cart */}
       <div className="row">
-        {/* Products Section */}
+
+        {/* ================= PRODUCTS SECTION ================= */}
         <div className="col-lg-8 mb-4">
           <div className="card shadow border-0 rounded-4 h-100">
             <div className="card-body">
+
               <h4 className="fw-bold mb-4">Products</h4>
 
-              <input
-                type="text"
-                className="form-control mb-4"
-                placeholder="Search Products..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+              {/* Search */}
+              <div className="input-group mb-4">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
 
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              {/* Loading */}
               {loading ? (
                 <div className="text-center py-5">
-                  <div className="spinner-border text-primary"></div>
-                </div>
-              ) : products.length === 0 ? (
-                <div className="text-center py-5">
-                  <h4>No Products Available</h4>
-                  <p className="text-muted">
-                    Add products from the Products page first.
+                  <div className="spinner-border text-success"></div>
+                  <p className="mt-3 text-muted">
+                    Loading products...
                   </p>
                 </div>
+              ) : filteredProducts.length === 0 ? (
+
+                <div className="text-center py-5">
+                  <i className="bi bi-box display-3 text-secondary"></i>
+
+                  <h4 className="mt-3">
+                    No Products Found
+                  </h4>
+
+                  <p className="text-muted">
+                    Try another search or add products first.
+                  </p>
+                </div>
+
               ) : (
+
                 <div className="row">
+
                   {filteredProducts.map((product) => (
+
                     <div
                       className="col-md-6 col-xl-4 mb-4"
                       key={product._id}
                     >
-                      <div className="card h-100 shadow-sm">
+                      <div className="card h-100 shadow-sm border-0">
+
                         <div className="card-body d-flex flex-column justify-content-between">
+
                           <div>
-                            <h5 className="fw-bold">{product.name}</h5>
+
+                            <h5 className="fw-bold">
+                              {product.name}
+                            </h5>
+
                             <p className="text-muted mb-2">
                               {product.category}
                             </p>
+
                             <h4 className="text-success fw-bold">
                               {formatCurrency(product.price)}
                             </h4>
+
                             <p className="mb-3">
-                              Stock: <strong>{product.stock}</strong>
+                              Stock
+
+                              <span
+                                className={`badge ms-2 ${
+                                  product.stock > 10
+                                    ? "bg-success"
+                                    : product.stock > 0
+                                    ? "bg-warning text-dark"
+                                    : "bg-danger"
+                                }`}
+                              >
+                                {product.stock}
+                              </span>
                             </p>
+
                           </div>
 
                           <button
-                            className="btn btn-success w-100"
+                            className="btn btn-success fw-semibold w-100"
                             disabled={product.stock <= 0}
                             onClick={() => addToCart(product)}
                           >
-                            {product.stock <= 0 ? "Out of Stock" : "Add To Cart"}
+                            {product.stock <= 0
+                              ? "Out of Stock"
+                              : "Add to Cart"}
                           </button>
+
                         </div>
+
                       </div>
                     </div>
+
                   ))}
+
                 </div>
+
               )}
+
             </div>
           </div>
         </div>
 
-        {/* Cart Section */}
+        {/* ================= SHOPPING CART ================= */}
         <div className="col-lg-4 mb-4">
+
           <div className="card shadow border-0 rounded-4 h-100">
+
             <div className="card-body d-flex flex-column">
-              <h4 className="fw-bold mb-3">Shopping Cart</h4>
+
+              <h4 className="fw-bold mb-3">
+                Shopping Cart
+              </h4>
+
               <hr />
 
               {cart.length === 0 ? (
-                <p className="text-muted text-center my-auto">
-                  Cart is empty.
-                </p>
+
+                <div className="text-center my-auto">
+
+                  <i className="bi bi-cart-x display-4 text-secondary"></i>
+
+                  <h5 className="mt-3 text-muted">
+                    Cart is Empty
+                  </h5>
+
+                  <small className="text-secondary">
+                    Add products to begin a sale.
+                  </small>
+
+                </div>
+
               ) : (
+
                 <div className="flex-grow-1 overflow-auto pe-1">
+
                   {cart.map((item) => (
+
                     <div
                       key={item._id}
                       className="border rounded-3 p-3 mb-3"
                     >
-                      <div className="d-flex justify-content-between align-items-start">
+
+                      <div className="d-flex justify-content-between">
+
                         <div>
-                          <h6 className="fw-bold mb-1">{item.name}</h6>
+
+                          <h6 className="fw-bold mb-1">
+                            {item.name}
+                          </h6>
+
                           <small className="text-muted">
                             {formatCurrency(item.price)}
                           </small>
+
                         </div>
 
                         <button
                           className="btn btn-sm btn-outline-danger"
                           onClick={() => removeItem(item._id)}
                         >
-                          ×
+                          <i className="bi bi-trash"></i>
                         </button>
+
                       </div>
 
-                      <div className="d-flex align-items-center justify-content-between mt-3">
+                      <div className="d-flex justify-content-between align-items-center mt-3">
+
                         <div>
+
                           <button
                             className="btn btn-outline-secondary btn-sm"
                             onClick={() => decreaseQty(item._id)}
                           >
-                            -
+                            <i className="bi bi-dash"></i>
                           </button>
-                          <span className="mx-3 fw-bold">{item.qty}</span>
+
+                          <span className="mx-3 fw-bold">
+                            {item.qty}
+                          </span>
+
                           <button
                             className="btn btn-outline-secondary btn-sm"
                             onClick={() => increaseQty(item._id)}
                           >
-                            +
+                            <i className="bi bi-plus"></i>
                           </button>
+
                         </div>
 
-                        <strong>
+                        <strong className="text-success">
                           {formatCurrency(item.qty * item.price)}
                         </strong>
+
                       </div>
+
                     </div>
+
                   ))}
+
                 </div>
+
               )}
 
               <hr />
-              <div className="d-flex justify-content-between">
-                <h5>Subtotal</h5>
-                <h5 className="text-success">{formatCurrency(subtotal)}</h5>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Checkout Section */}
-      <div className="row">
-        <div className="col-lg-12">
-          <div className="card shadow border-0 rounded-4">
-            <div className="card-body">
-              <h4 className="fw-bold mb-4">Checkout</h4>
-
-              <div className="row">
-                {/* Payment Method */}
-                <div className="col-md-4 mb-3">
-                  <label className="form-label fw-semibold">
-                    Payment Method
-                  </label>
-                  <select
-                    className="form-select"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  >
-                    <option value="Cash">Cash</option>
-                    <option value="M-Pesa">M-Pesa</option>
-                    <option value="Bank">Bank Transfer</option>
-                  </select>
-                </div>
-
-                {/* M-Pesa Inputs */}
-                {paymentMethod === "M-Pesa" && (
-                  <div className="col-md-4 mb-3">
-                    <label className="form-label fw-semibold">
-                      M-Pesa Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      className="form-control"
-                      placeholder="254712345678"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                {/* Bank Details Inputs */}
-                {paymentMethod === "Bank" && (
-                  <>
-                    <div className="col-md-4 mb-3">
-                      <label className="form-label fw-semibold">
-                        Bank Name
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Equity, KCB, Co-op..."
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="col-md-4 mb-3">
-                      <label className="form-label fw-semibold">
-                        Transaction Reference
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Reference Number"
-                        value={bankReference}
-                        onChange={(e) => setBankReference(e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Discount */}
-                <div className="col-md-4 mb-3">
-                  <label className="form-label fw-semibold">Discount</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={discount}
-                    onChange={(e) => setDiscount(e.target.value)}
-                  />
-                </div>
-
-                {/* Amount Received (Cash Only) */}
-                {paymentMethod === "Cash" && (
-                  <div className="col-md-4 mb-3">
-                    <label className="form-label fw-semibold">
-                      Amount Received
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      className="form-control"
-                      value={amountReceived}
-                      onChange={(e) => setAmountReceived(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                {/* Total */}
-                <div className="col-md-4 mb-3">
-                  <label className="form-label fw-semibold">Total</label>
-                  <input
-                    type="text"
-                    className="form-control fw-bold"
-                    value={formatCurrency(total)}
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              <hr />
-
-              {/* Checkout Footer */}
               <div className="d-flex justify-content-between align-items-center">
-                {paymentMethod === "Cash" ? (
-                  <div>
-                    <h6 className="text-muted mb-0">Change</h6>
-                    <h3
-                      className={`fw-bold ${
-                        change >= 0 ? "text-success" : "text-danger"
-                      }`}
-                    >
-                      {formatCurrency(change)}
-                    </h3>
-                  </div>
-                ) : (
-                  <div />
-                )}
 
-                <button
-                  className="btn btn-success btn-lg px-4"
-                  disabled={cart.length === 0}
-                  onClick={completeSale}
-                >
-                  Complete Sale
-                </button>
+                <h5 className="mb-0">
+                  Subtotal
+                </h5>
+
+                <h5 className="text-success mb-0">
+                  {formatCurrency(subtotal)}
+                </h5>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
+
       </div>
     </div>
   );
