@@ -71,10 +71,14 @@ exports.createSale = async (req, res) => {
 
       const quantity = Number(item.quantity);
 
-      if (!item.productId || quantity <= 0) {
+      if (
+        !item.productId ||
+        Number.isNaN(quantity) ||
+        quantity <= 0
+      ) {
         return res.status(400).json({
           success: false,
-          message: "Invalid sale item.",
+          message: "Invalid sale item quantity.",
         });
       }
 
@@ -87,32 +91,27 @@ exports.createSale = async (req, res) => {
         });
       }
 
-      if (product.stock < quantity) {
+      const currentStock = Number(product.stock ?? 0);
+      const currentSold = Number(product.sold ?? 0);
+
+      if (Number.isNaN(currentStock) || Number.isNaN(currentSold)) {
+        return res.status(500).json({
+          success: false,
+          message: "Product inventory data is invalid.",
+        });
+      }
+
+      if (currentStock < quantity) {
         return res.status(400).json({
           success: false,
           message: `${product.name} has only ${product.stock} item(s) remaining.`,
         });
       }
 
-      // Update Stock
-     // Convert values to numbers
-const currentStock = Number(product.stock || 0);
-const currentSold = Number(product.sold || 0);
+      product.stock = currentStock - quantity;
+      product.sold = currentSold + quantity;
 
-// Check stock
-if (currentStock < quantity) {
-  return res.status(400).json({
-    success: false,
-    message: "Not enough stock available.",
-  });
-}
-
-// Update values
-product.stock = currentStock - quantity;
-product.sold = currentSold + quantity;
-
-// Save product
-await product.save();
+      await product.save();
 
       const subtotal = product.price * quantity;
 
