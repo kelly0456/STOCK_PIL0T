@@ -704,17 +704,136 @@ export default function Sales() {
 
               <hr />
 
-              <div className="d-flex justify-content-between align-items-center">
+            {/* ================= CHECKOUT ================= */}
 
-                <h5 className="mb-0">
-                  Subtotal
-                </h5>
+<div className="card shadow border-0 rounded-4 mt-4">
+  <div className="card-body">
 
-                <h5 className="text-success mb-0">
-                  {formatCurrency(subtotal)}
-                </h5>
+    <h4 className="fw-bold mb-4">
+      Checkout
+    </h4>
 
-              </div>
+    <div className="row">
+
+      <div className="col-md-4 mb-3">
+        <label className="form-label">
+          Payment Method
+        </label>
+
+        <select
+          className="form-select"
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+        >
+          <option>Cash</option>
+          <option>M-Pesa</option>
+          <option>Bank</option>
+        </select>
+      </div>
+
+      {paymentMethod === "Cash" && (
+        <div className="col-md-4 mb-3">
+          <label className="form-label">
+            Amount Received
+          </label>
+
+          <input
+            type="number"
+            className="form-control"
+            value={amountReceived}
+            onChange={(e) => setAmountReceived(e.target.value)}
+          />
+        </div>
+      )}
+
+      {paymentMethod === "M-Pesa" && (
+        <div className="col-md-4 mb-3">
+          <label className="form-label">
+            Phone Number
+          </label>
+
+          <input
+            type="text"
+            className="form-control"
+            placeholder="2547XXXXXXXX"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+          />
+        </div>
+      )}
+
+      {paymentMethod === "Bank" && (
+        <>
+          <div className="col-md-4 mb-3">
+            <label className="form-label">
+              Bank Name
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+            />
+          </div>
+
+          <div className="col-md-4 mb-3">
+            <label className="form-label">
+              Reference
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={bankReference}
+              onChange={(e) => setBankReference(e.target.value)}
+            />
+          </div>
+        </>
+      )}
+
+    </div>
+
+    <hr />
+
+    <div className="row align-items-center">
+
+      <div className="col-md-4">
+        <h5>
+          Total:
+          <span className="text-success ms-2">
+            {formatCurrency(total)}
+          </span>
+        </h5>
+      </div>
+
+      <div className="col-md-4">
+        <h5>
+          Change:
+          <span className="text-primary ms-2">
+            {formatCurrency(change > 0 ? change : 0)}
+          </span>
+        </h5>
+      </div>
+
+      <div className="col-md-4 text-end">
+
+        <button
+          className="btn btn-success btn-lg"
+          disabled={processingSale}
+          onClick={completeSale}
+        >
+          {processingSale
+            ? "Processing..."
+            : "Complete Sale"}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
 
             </div>
 
