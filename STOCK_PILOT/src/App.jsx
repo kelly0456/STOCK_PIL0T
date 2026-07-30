@@ -16,7 +16,6 @@ import History from "./Pages/History";
 import Employees from "./Pages/Employees";
 
 function AppLayout() {
-
   const location = useLocation();
 
   const publicPages = [
@@ -25,21 +24,17 @@ function AppLayout() {
     "/register",
   ];
 
-  const isFeaturePage =
-    location.pathname.startsWith("/feature/");
+  const isFeaturePage = location.pathname.startsWith("/feature/");
 
   const showSidebar =
-    !publicPages.includes(location.pathname) &&
-    !isFeaturePage;
+    !publicPages.includes(location.pathname) && !isFeaturePage;
 
   return (
     <div className="d-flex flex-column vh-100">
-
-      {/* Top Navbar */}
+      {/* Navbar */}
       <Navbar />
 
       <div className="d-flex flex-grow-1">
-
         {/* Sidebar */}
         {showSidebar && <Sidebar />}
 
@@ -51,25 +46,14 @@ function AppLayout() {
             overflowY: "auto",
           }}
         >
-
           <Routes>
-
             {/* ================= PUBLIC ================= */}
 
             <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-            <Route
-              path="/login"
-              element={<Login />}
-            />
-
-            <Route
-              path="/register"
-              element={<Register />}
-            />
-
-            {/* Feature Preview */}
-
+            {/* Feature Details */}
             <Route
               path="/feature/:feature"
               element={<FeatureDetails />}
@@ -115,10 +99,7 @@ function AppLayout() {
 
             {/* ================= SHARED ================= */}
 
-            <Route
-              path="/sales"
-              element={<Sales />}
-            />
+            <Route path="/sales" element={<Sales />} />
 
             {/* ================= 404 ================= */}
 
@@ -126,25 +107,16 @@ function AppLayout() {
               path="*"
               element={
                 <div className="text-center mt-5">
-
-                  <h2 className="text-danger">
-                    404 - Page Not Found
-                  </h2>
-
+                  <h2 className="text-danger">404 - Page Not Found</h2>
                   <p className="text-muted">
                     The page you're looking for doesn't exist.
                   </p>
-
                 </div>
               }
             />
-
           </Routes>
-
         </div>
-
       </div>
-
     </div>
   );
 }
