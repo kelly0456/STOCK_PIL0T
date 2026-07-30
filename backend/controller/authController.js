@@ -2,6 +2,12 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const normalizeEmail = (value) =>
+  typeof value === "string" ? value.trim().toLowerCase() : "";
+
+const isBcryptHash = (value) =>
+  typeof value === "string" && /^\$2[aby]\$/.test(value);
+
 // ===============================
 // Register Business Owner
 // ===============================
@@ -73,17 +79,19 @@ exports.register = async (req, res) => {
 // ===============================
 exports.login = async (req, res) => {
   try {
+    const email = typeof req.body?.email === "string" ? req.body.email : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
 
-    const { email, password } = req.body;
-
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       return res.status(400).json({
         message: "Email and password are required.",
       });
     }
 
+    const normalizedEmail = normalizeEmail(email);
+
     const user = await User.findOne({
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
     });
 
     if (!user) {
@@ -92,15 +100,22 @@ exports.login = async (req, res) => {
       });
     }
 
-    const match = await bcrypt.compare(
-      password,
-      user.password
-    );
+    let isValidPassword = false;
 
-    if (!match) {
+    if (isBcryptHash(user.password)) {
+      isValidPassword = await bcrypt.compare(password, user.password);
+    } else {
+      isValidPassword = user.password === password;
+    }
+
+    if (!isValidPassword) {
       return res.status(400).json({
         message: "Invalid email or password.",
       });
+    }
+
+    if (!isBcryptHash(user.password) && typeof user.password === "string") {
+      user.password = await bcrypt.hash(password, 10);
     }
 
     user.lastLogin = new Date();
@@ -130,7 +145,6 @@ exports.login = async (req, res) => {
         mustChangePassword: user.mustChangePassword,
       },
     });
-
   } catch (error) {
     console.error(error);
 
