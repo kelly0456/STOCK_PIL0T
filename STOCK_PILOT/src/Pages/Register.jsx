@@ -38,7 +38,7 @@ export default function Register() {
       setLoading(true);
 
       const res = await axios.post(
-        `${API_URL}/auth/register`,
+        `${API_URL}/api/auth/register`,
         {
           businessName: formData.businessName,
           fullname: formData.fullname,
@@ -77,7 +77,7 @@ export default function Register() {
           {message && (
             <div
               className={`alert ${
-                message.includes("success")
+                message.toLowerCase().includes("success")
                   ? "alert-success"
                   : "alert-danger"
               }`}
@@ -88,10 +88,7 @@ export default function Register() {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label">
-                Business Name
-              </label>
-
+              <label className="form-label">Business Name</label>
               <input
                 type="text"
                 className="form-control"
@@ -104,10 +101,7 @@ export default function Register() {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">
-                Full Name
-              </label>
-
+              <label className="form-label">Full Name</label>
               <input
                 type="text"
                 className="form-control"
@@ -119,10 +113,7 @@ export default function Register() {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">
-                Email
-              </label>
-
+              <label className="form-label">Email</label>
               <input
                 type="email"
                 className="form-control"
@@ -134,10 +125,7 @@ export default function Register() {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">
-                Password
-              </label>
-
+              <label className="form-label">Password</label>
               <input
                 type="password"
                 className="form-control"
@@ -149,10 +137,7 @@ export default function Register() {
             </div>
 
             <div className="mb-4">
-              <label className="form-label">
-                Confirm Password
-              </label>
-
+              <label className="form-label">Confirm Password</label>
               <input
                 type="password"
                 className="form-control"
@@ -168,9 +153,7 @@ export default function Register() {
               className="btn btn-primary w-100"
               disabled={loading}
             >
-              {loading
-                ? "Creating Account..."
-                : "Create Account"}
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
         </div>
