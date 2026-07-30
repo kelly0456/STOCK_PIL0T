@@ -43,8 +43,13 @@ export default function Dashboard() {
   }
 );
 
-      setProducts(res.data);
+      const productsData = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.products)
+        ? res.data.products
+        : [];
 
+      setProducts(productsData);
     } catch (error) {
       console.error(error);
     } finally {

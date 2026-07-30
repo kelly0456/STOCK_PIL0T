@@ -152,7 +152,13 @@ export default function Sales() {
         },
       });
 
-      setProducts(response.data);
+      const productsData = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.products)
+        ? response.data.products
+        : [];
+
+      setProducts(productsData);
     } catch (error) {
       console.error("Failed to fetch products", error);
     } finally {

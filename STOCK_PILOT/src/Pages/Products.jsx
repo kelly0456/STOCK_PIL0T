@@ -20,7 +20,13 @@ export default function Products() {
 
       const res = await axios.get(`${API_URL}/api/products`);
 
-      setProducts(res.data);
+      const productsData = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.products)
+        ? res.data.products
+        : [];
+
+      setProducts(productsData);
 
     } catch (err) {
       console.error(err);
