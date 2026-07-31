@@ -595,7 +595,7 @@ export default function Sales() {
                         <img
                           src={
                             product.imageUrl ||
-                            "https://placehold.co/400x250?text=No+Image"
+                            "https://i.pinimg.com/736x/88/dc/1c/88dc1c3ab7fc882fd7d6e18fedb1efac.jpg"
                           }
                           alt={product.name}
                           className="card-img-top"
