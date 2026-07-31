@@ -212,7 +212,7 @@ export default function Products() {
 
                   <td>
                     <img
-                      src={p.imageUrl || "https://via.placeholder.com/60?text=No+Image"}
+                      src={p.imageUrl || "https://i.pinimg.com/736x/67/73/29/677329a6828e967aed71eb2e67c90e6d.jpg"}
                       alt={p.name}
                       width="60"
                       height="60"
