@@ -592,18 +592,21 @@ export default function Sales() {
                     >
                       <div className="card h-100 shadow-sm border-0">
 
-                        <img
-                          src={
-                            product.imageUrl ||
-                            "https://placehold.co/400x250?text=No+Image"
-                          }
-                          alt={product.name}
-                          className="card-img-top"
-                          style={{
-                            height: 200,
-                            objectFit: "cover",
-                          }}
-                        />
+                       <img
+  src={
+    product.image ||
+    "https://placehold.co/400x250?text=No+Image"
+  }
+  alt={product.name}
+  className="card-img-top"
+  style={{
+    height: 200,
+    objectFit: "cover",
+  }}
+  onError={(e) => {
+    e.target.src = "https://placehold.co/400x250?text=No+Image";
+  }}
+/>
 
                         <div className="card-body d-flex flex-column justify-content-between">
 
