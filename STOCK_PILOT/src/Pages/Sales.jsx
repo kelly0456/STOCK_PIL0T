@@ -79,6 +79,8 @@ export default function Sales() {
     message: "",
   });
 
+  const [soldProducts, setSoldProducts] = useState([]);
+
   // =====================================================
   // SALE PROCESSING
   // Used to disable the Complete Sale button
@@ -443,6 +445,13 @@ export default function Sales() {
 
       if (response.data.success) {
 
+        const soldItems = cart.map((item) => ({
+          ...item,
+          subtotal: item.qty * item.price,
+        }));
+
+        setSoldProducts(soldItems);
+
         // Update Dashboard Cards
 
         setCompletedTransactions(
@@ -465,10 +474,14 @@ export default function Sales() {
 
         await fetchProducts();
 
-        alert(
-          response.data.message ||
-          "Sale completed successfully."
-        );
+        setPrompt({
+          show: true,
+          type: "success",
+          title: "Sale Completed",
+          message:
+            response.data.message ||
+            "Sale completed successfully.",
+        });
 
       }
 
@@ -476,10 +489,14 @@ export default function Sales() {
 
       console.error("Sale Error:", error);
 
-      alert(
-        error.response?.data?.message ||
-        "Unable to complete the sale."
-      );
+      setPrompt({
+        show: true,
+        type: "error",
+        title: "Sale Failed",
+        message:
+          error.response?.data?.message ||
+          "Unable to complete the sale.",
+      });
 
     } finally {
 
@@ -492,6 +509,25 @@ export default function Sales() {
 
   return (
     <div className="container-fluid py-4">
+      {prompt.show && (
+        <div className={`alert alert-${
+          prompt.type === "error"
+            ? "danger"
+            : prompt.type === "success"
+            ? "success"
+            : prompt.type === "warning"
+            ? "warning"
+            : "info"
+        } alert-dismissible fade show`} role="alert">
+          <strong>{prompt.title}</strong> {prompt.message}
+          <button
+            type="button"
+            className="btn-close"
+            aria-label="Close"
+            onClick={() => setPrompt({ ...prompt, show: false })}
+          ></button>
+        </div>
+      )}
       {/* Products Catalog & Shopping Cart */}
       <div className="row">
 
@@ -551,11 +587,24 @@ export default function Sales() {
                     >
                       <div className="card h-100 shadow-sm border-0">
 
+                        <img
+                          src={
+                            product.imageUrl ||
+                            "https://via.placeholder.com/400x250?text=No+Image"
+                          }
+                          alt={product.name}
+                          className="card-img-top"
+                          style={{
+                            height: 200,
+                            objectFit: "cover",
+                          }}
+                        />
+
                         <div className="card-body d-flex flex-column justify-content-between">
 
                           <div>
 
-                            <h5 className="fw-bold">
+                            <h5 className="fw-bold mb-1">
                               {product.name}
                             </h5>
 
@@ -563,13 +612,12 @@ export default function Sales() {
                               {product.category}
                             </p>
 
-                            <h4 className="text-success fw-bold">
+                            <h4 className="text-success fw-bold mb-3">
                               {formatCurrency(product.price)}
                             </h4>
 
                             <p className="mb-3">
                               Stock
-
                               <span
                                 className={`badge ms-2 ${
                                   product.stock > 10
@@ -605,18 +653,6 @@ export default function Sales() {
                 </div>
 
               )}
-
-            </div>
-          </div>
-        </div>
-
-        {/* ================= SHOPPING CART ================= */}
-        <div className="col-lg-4 mb-4">
-
-          <div className="card shadow border-0 rounded-4 h-100">
-
-            <div className="card-body d-flex flex-column">
-
               <h4 className="fw-bold mb-3">
                 Shopping Cart
               </h4>
@@ -871,6 +907,51 @@ export default function Sales() {
         </div>
 
       </div>
+
+      {soldProducts.length > 0 && (
+        <div className="row mt-4">
+          <div className="col-12">
+            <div className="card shadow border-0 rounded-4">
+              <div className="card-body">
+                <h4 className="fw-bold mb-3">
+                  Recently Sold Products
+                </h4>
+
+                {soldProducts.map((product) => (
+                  <div
+                    key={product._id}
+                    className="d-flex align-items-center mb-3"
+                  >
+                    <img
+                      src={
+                        product.imageUrl ||
+                        "https://via.placeholder.com/100?text=No+Image"
+                      }
+                      alt={product.name}
+                      width={100}
+                      height={100}
+                      className="rounded"
+                      style={{ objectFit: "cover" }}
+                    />
+
+                    <div className="ms-3 flex-grow-1">
+                      <div className="d-flex justify-content-between">
+                        <strong>{product.name}</strong>
+                        <span>{product.qty} pcs</span>
+                      </div>
+                      <div className="d-flex justify-content-between text-muted small">
+                        <span>{formatCurrency(product.price)}</span>
+                        <span>{formatCurrency(product.subtotal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

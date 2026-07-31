@@ -8,6 +8,7 @@ export default function Products() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -54,6 +55,7 @@ export default function Products() {
       await axios.post(`${API_URL}/api/products`, {
         name,
         price: Number(price),
+        imageUrl: imageUrl.trim(),
         stock: Number(stock),
         sold: 0,
       });
@@ -150,6 +152,14 @@ export default function Products() {
         />
 
         <input
+          type="text"
+          className="form-control mb-2"
+          placeholder="Image URL (Cloudinary)"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+        />
+
+        <input
           type="number"
           className="form-control mb-3"
           placeholder="Stock"
@@ -175,6 +185,7 @@ export default function Products() {
 
           <thead className="table-dark">
             <tr>
+              <th>Image</th>
               <th>Name</th>
               <th>Price</th>
               <th>Stock</th>
@@ -198,6 +209,17 @@ export default function Products() {
               products.map((p) => (
 
                 <tr key={p._id}>
+
+                  <td>
+                    <img
+                      src={p.imageUrl || "https://via.placeholder.com/60?text=No+Image"}
+                      alt={p.name}
+                      width="60"
+                      height="60"
+                      className="rounded"
+                      style={{ objectFit: "cover" }}
+                    />
+                  </td>
 
                   <td>{p.name}</td>
 
