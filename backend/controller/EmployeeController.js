@@ -99,6 +99,18 @@ exports.addEmployee = async (req, res) => {
   } catch (error) {
     console.error("ADD EMPLOYEE ERROR:", error);
 
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyValue)[0];
+      const message = duplicateField === "email"
+        ? "Email already exists."
+        : "Duplicate employee data provided.";
+
+      return res.status(400).json({
+        success: false,
+        message,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: error.message,
