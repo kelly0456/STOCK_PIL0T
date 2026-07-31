@@ -51,11 +51,12 @@ export default function Products() {
     }
 
     try {
+      const trimmedImageUrl = imageUrl.trim();
 
       await axios.post(`${API_URL}/api/products`, {
         name,
         price: Number(price),
-        imageUrl: imageUrl.trim(),
+        imageUrl: trimmedImageUrl,
         stock: Number(stock),
         sold: 0,
       });
@@ -63,11 +64,7 @@ export default function Products() {
       setName("");
       setPrice("");
       setStock("");
-
-      setMessage("Product added successfully.");
-
-      fetchProducts();
-
+      setImageUrl("");
     } catch (err) {
 
       console.error(err);
@@ -154,10 +151,29 @@ export default function Products() {
         <input
           type="text"
           className="form-control mb-2"
-          placeholder="Image URL (Cloudinary)"
+          placeholder="Paste Cloudinary image URL here"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
         />
+
+        {imageUrl && (
+          <div className="mb-3">
+            <label className="form-label small text-muted">
+              Image Preview
+            </label>
+            <div className="border rounded overflow-hidden" style={{ maxHeight: 220 }}>
+              <img
+                src={imageUrl}
+                alt="Preview"
+                className="img-fluid w-100"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://placehold.co/400x250?text=Invalid+Image";
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <input
           type="number"
@@ -199,7 +215,7 @@ export default function Products() {
             {products.length === 0 ? (
 
               <tr>
-                <td colSpan="5" className="text-center">
+                <td colSpan="6" className="text-center">
                   No products found.
                 </td>
               </tr>
