@@ -8,7 +8,8 @@ export default function Products() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+const [image, setImage] = useState(null);
+const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -51,20 +52,34 @@ export default function Products() {
     }
 
     try {
-      const trimmedImageUrl = imageUrl.trim();
+  const formData = new FormData();
 
-      await axios.post(`${API_URL}/api/products`, {
-        name,
-        price: Number(price),
-        imageUrl: trimmedImageUrl,
-        stock: Number(stock),
-        sold: 0,
-      });
+formData.append("name", name);
+formData.append("price", Number(price));
+formData.append("stock", Number(stock));
+formData.append("sold", 0);
+
+if (image) {
+  formData.append("image", image);
+}
+
+await axios.post(
+  `${API_URL}/api/products`,
+  formData,
+  {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }
+);
 
       setName("");
       setPrice("");
       setStock("");
-      setImageUrl("");
+      setImage(null);
+setPreview("");
+fetchProducts();
+setMessage("Product added successfully.");
     } catch (err) {
 
       console.error(err);
@@ -148,32 +163,37 @@ export default function Products() {
           onChange={(e) => setPrice(e.target.value)}
         />
 
-        <input
-          type="text"
-          className="form-control mb-2"
-          placeholder="https://placehold.co/400x250?text=Invalid+Image"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-        />
+      <input
+  type="file"
+  className="form-control mb-3"
+  accept="image/*"
+  onChange={(e) => {
+    const file = e.target.files[0];
 
-        {imageUrl && (
-          <div className="mb-3">
-            <label className="form-label small text-muted">
-              Image Preview
-            </label>
-            <div className="border rounded overflow-hidden" style={{ maxHeight: 220 }}>
-              <img
-                src={imageUrl}
-                alt="Preview"
-                className="img-fluid w-100"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "https://placehold.co/400x250?text=Invalid+Image";
-                }}
-              />
-            </div>
-          </div>
-        )}
+    if (file) {
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  }}
+/>
+
+{preview && (
+  <div className="mb-3">
+    <label className="form-label small text-muted">
+      Image Preview
+    </label>
+
+    <img
+      src={preview}
+      alt="Preview"
+      className="img-fluid rounded"
+      style={{
+        maxHeight: "220px",
+        objectFit: "cover",
+      }}
+    />
+  </div>
+)}
 
         <input
           type="number"
@@ -226,16 +246,23 @@ export default function Products() {
 
                 <tr key={p._id}>
 
-                  <td>
-                    <img
-                      src={p.imageUrl || "https://i.pinimg.com/736x/c3/00/df/c300df3c15c363f8017fe7d664292caf.jpg"}
-                      alt={p.name}
-                      width="60"
-                      height="60"
-                      className="rounded"
-                      style={{ objectFit: "cover" }}
-                    />
-                  </td>
+              <td>
+  <img
+    src={
+      p.image ||
+      "https://placehold.co/60x60?text=No+Image"
+    }
+    alt={p.name}
+    width="60"
+    height="60"
+    className="rounded"
+    style={{ objectFit: "cover" }}
+    onError={(e) => {
+      e.target.onerror = null;
+      e.target.src = "https://placehold.co/60x60?text=No+Image";
+    }}
+  />
+</td>
 
                   <td>{p.name}</td>
 
