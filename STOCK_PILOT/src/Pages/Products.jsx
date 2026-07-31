@@ -228,7 +228,7 @@ export default function Products() {
 
                   <td>
                     <img
-                      src={p.imageUrl || "https://i.pinimg.com/736x/67/73/29/677329a6828e967aed71eb2e67c90e6d.jpg"}
+                      src={p.imageUrl || "https://i.pinimg.com/736x/c3/00/df/c300df3c15c363f8017fe7d664292caf.jpg"}
                       alt={p.name}
                       width="60"
                       height="60"
