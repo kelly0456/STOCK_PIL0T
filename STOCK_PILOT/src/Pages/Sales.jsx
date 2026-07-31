@@ -636,22 +636,29 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* Products Catalog & Shopping Cart */}
+      {/* Products Catalog & Current Sale */}
       <div className="row">
 
         {/* ================= PRODUCTS SECTION ================= */}
         <div className="col-lg-8 mb-4">
           <div className="card shadow border-0 rounded-4 h-100">
             <div className="card-body">
+              <div className="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                  <h4 className="fw-bold mb-1">Products</h4>
+                  <p className="text-muted small mb-0">
+                    Search and add items directly to the current sale.
+                  </p>
+                </div>
+                <span className="badge bg-secondary py-2 px-3">
+                  {filteredProducts.length} available
+                </span>
+              </div>
 
-              <h4 className="fw-bold mb-4">Products</h4>
-
-              {/* Search */}
               <div className="input-group mb-4">
                 <span className="input-group-text">
                   <i className="bi bi-search"></i>
                 </span>
-
                 <input
                   type="text"
                   className="form-control"
@@ -661,347 +668,190 @@ export default function Sales() {
                 />
               </div>
 
-              {/* Loading */}
               {loading ? (
                 <div className="text-center py-5">
                   <div className="spinner-border text-success"></div>
-                  <p className="mt-3 text-muted">
-                    Loading products...
-                  </p>
+                  <p className="mt-3 text-muted">Loading products...</p>
                 </div>
               ) : filteredProducts.length === 0 ? (
-
                 <div className="text-center py-5">
                   <i className="bi bi-box display-3 text-secondary"></i>
-
-                  <h4 className="mt-3">
-                    No Products Found
-                  </h4>
-
-                  <p className="text-muted">
-                    Try another search or add products first.
-                  </p>
+                  <h4 className="mt-3">No products found</h4>
+                  <p className="text-muted">Try another search or add products first.</p>
                 </div>
-
               ) : (
-
-                <div className="row">
-
-                  {filteredProducts.map((product) => (
-
-                    <div
-                      className="col-md-6 col-xl-4 mb-4"
-                      key={product._id}
-                    >
-                      <div className="card h-100 shadow-sm border-0">
-                        <div className="card-body d-flex flex-column justify-content-between">
-
-                          <div>
-
-                            <h5 className="fw-bold mb-1">
-                              {product.name}
-                            </h5>
-
-                            <p className="text-muted mb-2">
-                              {product.category}
-                            </p>
-
-                            <h4 className="text-success fw-bold mb-3">
-                              {formatCurrency(product.price)}
-                            </h4>
-
-                            <p className="mb-3">
-                              Stock
-                              <span
-                                className={`badge ms-2 ${
-                                  product.stock > 10
-                                    ? "bg-success"
-                                    : product.stock > 0
-                                    ? "bg-warning text-dark"
-                                    : "bg-danger"
-                                }`}
-                              >
-                                {product.stock}
-                              </span>
-                            </p>
-
-                          </div>
-
-                          <button
-                            className="btn btn-success fw-semibold w-100"
-                            disabled={product.stock <= 0}
-                            onClick={() => addToCart(product)}
-                          >
-                            {product.stock <= 0
-                              ? "Out of Stock"
-                              : "Add to Cart"}
-                          </button>
-
-                        </div>
-
-                      </div>
-                    </div>
-
-                  ))}
-
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th className="text-end">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProducts.map((product) => (
+                        <tr key={product._id}>
+                          <td>{product.name}</td>
+                          <td>{product.category || "General"}</td>
+                          <td>{formatCurrency(product.price)}</td>
+                          <td>
+                            <span className={`badge ${product.stock > 10 ? "bg-success" : product.stock > 0 ? "bg-warning text-dark" : "bg-danger"}`}>
+                              {product.stock}
+                            </span>
+                          </td>
+                          <td className="text-end">
+                            <button
+                              className="btn btn-sm btn-primary"
+                              disabled={product.stock <= 0}
+                              onClick={() => addToCart(product)}
+                            >
+                              {product.stock <= 0 ? "Out of Stock" : "Add"}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-
               )}
-              <h4 className="fw-bold mb-3">
-                Shopping Cart
-              </h4>
+            </div>
+          </div>
+        </div>
 
-              <hr />
+        <div className="col-lg-4 mb-4">
+          <div className="card shadow border-0 rounded-4 h-100 d-flex flex-column">
+            <div className="card-body d-flex flex-column h-100">
+              <div className="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <h4 className="fw-bold mb-1">Current Sale</h4>
+                  <p className="text-muted small mb-0">Review selected items and complete checkout.</p>
+                </div>
+                <span className="badge bg-primary py-2 px-3">{totalCartItems} item(s)</span>
+              </div>
 
               {cart.length === 0 ? (
-
                 <div className="text-center my-auto">
-
                   <i className="bi bi-cart-x display-4 text-secondary"></i>
-
-                  <h5 className="mt-3 text-muted">
-                    Cart is Empty
-                  </h5>
-
-                  <small className="text-secondary">
-                    Add products to begin a sale.
-                  </small>
-
+                  <h5 className="mt-3 text-muted">No items selected</h5>
+                  <small className="text-secondary">Add products from the list to build the invoice.</small>
                 </div>
-
               ) : (
-
-                <div className="flex-grow-1 overflow-auto pe-1">
-
-                  {cart.map((item) => (
-
-                    <div
-                      key={item._id}
-                      className="border rounded-3 p-3 mb-3"
-                    >
-
-                      <div className="d-flex justify-content-between">
-
-                        <div>
-
-                          <h6 className="fw-bold mb-1">
-                            {item.name}
-                          </h6>
-
-                          <small className="text-muted">
-                            {formatCurrency(item.price)}
-                          </small>
-
-                        </div>
-
-                        <button
-                          className="btn btn-sm btn-outline-danger"
-                          onClick={() => removeItem(item._id)}
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
-
-                      </div>
-
-                      <div className="d-flex justify-content-between align-items-center mt-3">
-
-                        <div>
-
-                          <button
-                            className="btn btn-outline-secondary btn-sm"
-                            onClick={() => decreaseQty(item._id)}
-                          >
-                            <i className="bi bi-dash"></i>
-                          </button>
-
-                          <span className="mx-3 fw-bold">
-                            {item.qty}
-                          </span>
-
-                          <button
-                            className="btn btn-outline-secondary btn-sm"
-                            onClick={() => increaseQty(item._id)}
-                          >
-                            <i className="bi bi-plus"></i>
-                          </button>
-
-                        </div>
-
-                        <strong className="text-success">
-                          {formatCurrency(item.qty * item.price)}
-                        </strong>
-
-                      </div>
-
-                    </div>
-
-                  ))}
-
+                <div className="flex-grow-1 overflow-auto mb-3">
+                  <div className="table-responsive">
+                    <table className="table table-borderless align-middle mb-0">
+                      <thead>
+                        <tr className="text-muted small text-uppercase">
+                          <th>Item</th>
+                          <th className="text-end">Qty</th>
+                          <th className="text-end">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cart.map((item) => (
+                          <tr key={item._id}>
+                            <td>
+                              <div className="fw-semibold">{item.name}</div>
+                              <small className="text-muted">{formatCurrency(item.price)}</small>
+                            </td>
+                            <td className="text-end">
+                              <div className="btn-group btn-group-sm" role="group">
+                                <button className="btn btn-outline-secondary" onClick={() => decreaseQty(item._id)}>
+                                  <i className="bi bi-dash"></i>
+                                </button>
+                                <span className="btn btn-light px-3">{item.qty}</span>
+                                <button className="btn btn-outline-secondary" onClick={() => increaseQty(item._id)}>
+                                  <i className="bi bi-plus"></i>
+                                </button>
+                              </div>
+                            </td>
+                            <td className="text-end fw-bold">
+                              {formatCurrency(item.qty * item.price)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-
               )}
 
-              <hr />
+              <div className="card shadow-sm border rounded-4 p-3 mt-auto">
+                <h5 className="fw-bold mb-3">Checkout</h5>
+                <div className="mb-3">
+                  <label className="form-label">Payment Method</label>
+                  <select className="form-select" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                    <option>Cash</option>
+                    <option>M-Pesa</option>
+                    <option>Bank</option>
+                  </select>
+                </div>
 
-            {/* ================= CHECKOUT ================= */}
+                {paymentMethod === "Cash" && (
+                  <div className="mb-3">
+                    <label className="form-label">Amount Received</label>
+                    <input type="number" className="form-control" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value)} />
+                  </div>
+                )}
 
-<div className="card shadow border-0 rounded-4 mt-4">
-  <div className="card-body">
+                {paymentMethod === "M-Pesa" && (
+                  <div className="mb-3">
+                    <label className="form-label">Phone Number</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="2547XXXXXXXX"
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPhoneNumber(value);
+                        if (!value) {
+                          setPhonePrompt("Enter the customer's M-Pesa number.");
+                          setPhonePromptType("text-muted");
+                        } else if (!/^\d{9,12}$/.test(value.replace(/\D/g, ""))) {
+                          setPhonePrompt("Number should be 9 to 12 digits.");
+                          setPhonePromptType("text-danger");
+                        } else {
+                          setPhonePrompt("Phone number looks good.");
+                          setPhonePromptType("text-success");
+                        }
+                      }}
+                    />
+                    {phonePrompt && <div className={`form-text ${phonePromptType}`}>{phonePrompt}</div>}
+                  </div>
+                )}
 
-    <h4 className="fw-bold mb-4">
-      Checkout
-    </h4>
+                {paymentMethod === "Bank" && (
+                  <>
+                    <div className="mb-3">
+                      <label className="form-label">Bank Name</label>
+                      <input type="text" className="form-control" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Reference</label>
+                      <input type="text" className="form-control" value={bankReference} onChange={(e) => setBankReference(e.target.value)} />
+                    </div>
+                  </>
+                )}
 
-    <div className="row">
-
-      <div className="col-md-4 mb-3">
-        <label className="form-label">
-          Payment Method
-        </label>
-
-        <select
-          className="form-select"
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-        >
-          <option>Cash</option>
-          <option>M-Pesa</option>
-          <option>Bank</option>
-        </select>
-      </div>
-
-      {paymentMethod === "Cash" && (
-        <div className="col-md-4 mb-3">
-          <label className="form-label">
-            Amount Received
-          </label>
-
-          <input
-            type="number"
-            className="form-control"
-            value={amountReceived}
-            onChange={(e) => setAmountReceived(e.target.value)}
-          />
-        </div>
-      )}
-
-      {paymentMethod === "M-Pesa" && (
-        <div className="col-md-4 mb-3">
-          <label className="form-label">
-            Phone Number
-          </label>
-
-          <input
-            type="text"
-            className="form-control"
-            placeholder="2547XXXXXXXX"
-            value={phoneNumber}
-            onChange={(e) => {
-              const value = e.target.value;
-              setPhoneNumber(value);
-
-              if (!value) {
-                setPhonePrompt("Enter the customer's M-Pesa number.");
-                setPhonePromptType("text-muted");
-              } else if (!/^\d{9,12}$/.test(value.replace(/\D/g, ""))) {
-                setPhonePrompt("Number should be 9 to 12 digits.");
-                setPhonePromptType("text-danger");
-              } else {
-                setPhonePrompt("Phone number looks good.");
-                setPhonePromptType("text-success");
-              }
-            }}
-          />
-
-          {phonePrompt && (
-            <div className={`form-text ${phonePromptType}`}>
-              {phonePrompt}
+                <div className="d-flex justify-content-between mb-3">
+                  <span className="text-muted">Total</span>
+                  <strong>{formatCurrency(total)}</strong>
+                </div>
+                <div className="d-flex justify-content-between mb-3">
+                  <span className="text-muted">Change</span>
+                  <strong>{formatCurrency(change > 0 ? change : 0)}</strong>
+                </div>
+                <button className="btn btn-success w-100" disabled={processingSale} onClick={completeSale}>
+                  {processingSale ? "Processing..." : "Complete Sale"}
+                </button>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      )}
-
-      {paymentMethod === "Bank" && (
-        <>
-          <div className="col-md-4 mb-3">
-            <label className="form-label">
-              Bank Name
-            </label>
-
-            <input
-              type="text"
-              className="form-control"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-            />
-          </div>
-
-          <div className="col-md-4 mb-3">
-            <label className="form-label">
-              Reference
-            </label>
-
-            <input
-              type="text"
-              className="form-control"
-              value={bankReference}
-              onChange={(e) => setBankReference(e.target.value)}
-            />
-          </div>
-        </>
-      )}
-
-    </div>
-
-    <hr />
-
-    <div className="row align-items-center">
-
-      <div className="col-md-4">
-        <h5>
-          Total:
-          <span className="text-success ms-2">
-            {formatCurrency(total)}
-          </span>
-        </h5>
       </div>
-
-      <div className="col-md-4">
-        <h5>
-          Change:
-          <span className="text-primary ms-2">
-            {formatCurrency(change > 0 ? change : 0)}
-          </span>
-        </h5>
-      </div>
-
-      <div className="col-md-4 text-end">
-
-        <button
-          className="btn btn-success btn-lg"
-          disabled={processingSale}
-          onClick={completeSale}
-        >
-          {processingSale
-            ? "Processing..."
-            : "Complete Sale"}
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-</div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
 
     </div>
   );
