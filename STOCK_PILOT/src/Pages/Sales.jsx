@@ -436,6 +436,11 @@ export default function Sales() {
           discount: parsedDiscount,
           totalAmount: total,
           invoiceNumber,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -590,7 +595,7 @@ export default function Sales() {
                         <img
                           src={
                             product.imageUrl ||
-                            "https://via.placeholder.com/400x250?text=No+Image"
+                            "https://placehold.co/400x250?text=No+Image"
                           }
                           alt={product.name}
                           className="card-img-top"
@@ -925,7 +930,7 @@ export default function Sales() {
                     <img
                       src={
                         product.imageUrl ||
-                        "https://via.placeholder.com/100?text=No+Image"
+                        "https://placehold.co/100x100?text=No+Image"
                       }
                       alt={product.name}
                       width={100}
