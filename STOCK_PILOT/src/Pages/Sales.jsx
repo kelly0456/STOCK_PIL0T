@@ -23,6 +23,9 @@ export default function Sales() {
 
   // Controls the loading spinner while products load
   const [loading, setLoading] = useState(true);
+  const [sales, setSales] = useState([]);
+  const [salesLoading, setSalesLoading] = useState(true);
+  const [soldProducts, setSoldProducts] = useState([]);
 
   // =====================================================
   // SHOPPING CART
@@ -61,12 +64,6 @@ export default function Sales() {
   // Number of completed sales
   const [completedTransactions, setCompletedTransactions] = useState(0);
 
-  // Total revenue earned
-  const [totalSalesRevenue, setTotalSalesRevenue] = useState(0);
-
-  // Total quantity of products sold
-  const [totalItemsSold, setTotalItemsSold] = useState(0);
-
   // =====================================================
   // PROMPT / NOTIFICATION SYSTEM
   // (We will use this instead of alert() later)
@@ -78,8 +75,6 @@ export default function Sales() {
     title: "",
     message: "",
   });
-
-  const [soldProducts, setSoldProducts] = useState([]);
 
   // =====================================================
   // SALE PROCESSING
@@ -137,13 +132,72 @@ export default function Sales() {
     }).format(amount);
   };
 
+  const isSameDay = (dateA, dateB) =>
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate();
+
+  const today = new Date();
+  const todaySales = sales.filter((sale) =>
+    isSameDay(new Date(sale.createdAt), today)
+  );
+
+  const todayRevenue = todaySales.reduce(
+    (sum, sale) => sum + (sale.total || 0),
+    0
+  );
+
+  const todayTransactions = todaySales.length;
+
+  const todayItemsSold = todaySales.reduce(
+    (sum, sale) =>
+      sum +
+      sale.items.reduce(
+        (count, item) => count + Number(item.quantity || 0),
+        0
+      ),
+    0
+  );
+
+  const pendingSales = sales.filter(
+    (sale) => sale.paymentStatus === "pending"
+  );
+
+  const pendingPaymentsCount = pendingSales.length;
+  const pendingPaymentsAmount = pendingSales.reduce(
+    (sum, sale) => sum + (sale.total || 0),
+    0
+  );
+
   // =====================================================
   // FETCH PRODUCTS FROM BACKEND
   // =====================================================
 
   useEffect(() => {
     fetchProducts();
+    fetchSales();
   }, []);
+
+  const fetchSales = async () => {
+    try {
+      setSalesLoading(true);
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get(`${API_URL}/api/sales`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.success) {
+        setSales(response.data.sales || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch sales", error);
+    } finally {
+      setSalesLoading(false);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -457,19 +511,10 @@ export default function Sales() {
 
         setSoldProducts(soldItems);
 
-        // Update Dashboard Cards
+        // Refresh product and sales metrics
 
-        setCompletedTransactions(
-          (prev) => prev + 1
-        );
-
-        setTotalSalesRevenue(
-          (prev) => prev + total
-        );
-
-        setTotalItemsSold(
-          (prev) => prev + totalCartItems
-        );
+        await fetchProducts();
+        await fetchSales();
 
         // Reset Checkout
 
@@ -533,6 +578,64 @@ export default function Sales() {
           ></button>
         </div>
       )}
+
+      <div className="row mb-4">
+        <div className="col-md-3 mb-3">
+          <div className="card border-start border-4 border-primary shadow-sm h-100">
+            <div className="card-body">
+              <h6 className="text-uppercase text-muted mb-2">
+                Today's Revenue
+              </h6>
+              <h3 className="fw-bold mb-0">
+                {formatCurrency(todayRevenue)}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-3 mb-3">
+          <div className="card border-start border-4 border-success shadow-sm h-100">
+            <div className="card-body">
+              <h6 className="text-uppercase text-muted mb-2">
+                Completed Sales
+              </h6>
+              <h3 className="fw-bold mb-0">
+                {todayTransactions}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-3 mb-3">
+          <div className="card border-start border-4 border-warning shadow-sm h-100">
+            <div className="card-body">
+              <h6 className="text-uppercase text-muted mb-2">
+                Items Sold
+              </h6>
+              <h3 className="fw-bold mb-0">
+                {todayItemsSold}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-3 mb-3">
+          <div className="card border-start border-4 border-danger shadow-sm h-100">
+            <div className="card-body">
+              <h6 className="text-uppercase text-muted mb-2">
+                Pending Payments
+              </h6>
+              <h3 className="fw-bold mb-0">
+                {pendingPaymentsCount}
+              </h3>
+              <small className="text-muted">
+                {formatCurrency(pendingPaymentsAmount)}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Products Catalog & Shopping Cart */}
       <div className="row">
 
@@ -591,23 +694,6 @@ export default function Sales() {
                       key={product._id}
                     >
                       <div className="card h-100 shadow-sm border-0">
-
-                       <img
-  src={
-    product.image ||
-    "https://placehold.co/400x250?text=No+Image"
-  }
-  alt={product.name}
-  className="card-img-top"
-  style={{
-    height: 200,
-    objectFit: "cover",
-  }}
-  onError={(e) => {
-    e.target.src = "https://placehold.co/400x250?text=No+Image";
-  }}
-/>
-
                         <div className="card-body d-flex flex-column justify-content-between">
 
                           <div>
@@ -916,49 +1002,6 @@ export default function Sales() {
 
       </div>
 
-      {soldProducts.length > 0 && (
-        <div className="row mt-4">
-          <div className="col-12">
-            <div className="card shadow border-0 rounded-4">
-              <div className="card-body">
-                <h4 className="fw-bold mb-3">
-                  Recently Sold Products
-                </h4>
-
-                {soldProducts.map((product) => (
-                  <div
-                    key={product._id}
-                    className="d-flex align-items-center mb-3"
-                  >
-                    <img
-                      src={
-                        product.imageUrl ||
-                        "https://placehold.co/100x100?text=No+Image"
-                      }
-                      alt={product.name}
-                      width={100}
-                      height={100}
-                      className="rounded"
-                      style={{ objectFit: "cover" }}
-                    />
-
-                    <div className="ms-3 flex-grow-1">
-                      <div className="d-flex justify-content-between">
-                        <strong>{product.name}</strong>
-                        <span>{product.qty} pcs</span>
-                      </div>
-                      <div className="d-flex justify-content-between text-muted small">
-                        <span>{formatCurrency(product.price)}</span>
-                        <span>{formatCurrency(product.subtotal)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
