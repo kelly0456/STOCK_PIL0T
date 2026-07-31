@@ -6,7 +6,9 @@ const Product = require("../models/product");
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find();
+
     res.json(products);
+
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -19,14 +21,41 @@ exports.getProducts = async (req, res) => {
 // ===============================
 exports.addProduct = async (req, res) => {
   try {
-    const product = await Product.create(req.body);
 
-    res.status(201).json(product);
+    const {
+      name,
+      price,
+      stock,
+      category,
+      sold,
+    } = req.body;
+
+    const product = await Product.create({
+      name,
+      price,
+      stock,
+      category,
+      sold: sold || 0,
+
+      // Cloudinary Image URL
+      image: req.file ? req.file.path : "",
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Product added successfully.",
+      product,
+    });
 
   } catch (error) {
+
+    console.error(error);
+
     res.status(500).json({
+      success: false,
       message: error.message,
     });
+
   }
 };
 
@@ -36,9 +65,18 @@ exports.addProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
 
+    const updateData = {
+      ...req.body,
+    };
+
+    // If a new image is uploaded
+    if (req.file) {
+      updateData.image = req.file.path;
+    }
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       {
         new: true,
         runValidators: true,
@@ -47,16 +85,24 @@ exports.updateProduct = async (req, res) => {
 
     if (!product) {
       return res.status(404).json({
+        success: false,
         message: "Product not found",
       });
     }
 
-    res.json(product);
+    res.json({
+      success: true,
+      message: "Product updated successfully.",
+      product,
+    });
 
   } catch (error) {
+
     res.status(500).json({
+      success: false,
       message: error.message,
     });
+
   }
 };
 
@@ -66,15 +112,26 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
 
-    await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findByIdAndDelete(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
 
     res.json({
+      success: true,
       message: "Product deleted successfully.",
     });
 
   } catch (error) {
+
     res.status(500).json({
+      success: false,
       message: error.message,
     });
+
   }
 };
