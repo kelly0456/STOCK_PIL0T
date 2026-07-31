@@ -151,7 +151,7 @@ export default function Products() {
         <input
           type="text"
           className="form-control mb-2"
-          placeholder="Paste Cloudinary image URL here"
+          placeholder="https://placehold.co/400x250?text=Invalid+Image"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
         />
